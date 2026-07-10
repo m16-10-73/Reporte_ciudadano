@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer'); // ¡Aquí activamos al cartero!
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Las fotos se guardarán en una carpeta llamada 'uploads'
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Base de datos temporal en memoria
 let reportesMunicipales = [];
