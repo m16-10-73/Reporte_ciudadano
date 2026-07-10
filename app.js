@@ -195,13 +195,15 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
         `;
     }
 
-    const cartero = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: 'manuelcabezasb1673@gmail.com',    
-            pass: 'ebti ppfd zkon qeou'  
-        }
-    });
+   const cartero = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true para el puerto 465
+    auth: {
+        user: 'manuelcabezasb1673@gmail.com',    
+        pass: 'ebti ppfd zkon qeou'  
+    }
+});
 
     const opcionesCorreo = {
         from: '"Sistema de Alertas Comunitarias" <manuelcabezasb1673@gmail.com>', 
