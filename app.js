@@ -79,7 +79,7 @@ app.get('/', (req, res) => {
                 <textarea name="descripcion" placeholder="Detalle la situación aquí..." required style="width:100%; padding:8px; margin:8px 0; height:80px; border-radius:4px; border:1px solid #ccc;"></textarea><br><br>
 
                 <label><b>Evidencia Fotográfica:</b></label><br>
-                <input type="file" name="foto" accept="image/*" style="width:100%; padding:8px; margin:8px 0;"><br><br>
+                <input type="file" name="foto" accept="image/*" capture="environment" style="width:100%; padding:8px; margin:8px 0;"><br><br>
 
                 <button type="submit" style="background:#27ae60; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px; font-weight:bold; width:100%;">Enviar Alerta a Central</button>
             </form>
@@ -200,8 +200,8 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
     port: 465,
     secure: true, // true para el puerto 465
     auth: {
-        user: 'manuelcabezasb1673@gmail.com',    
-        pass: 'ebti ppfd zkon qeou'  
+        user: process.env.EMAIL_USER,    
+        pass: process.env.EMAIL_PASS  
     }
 });
 
