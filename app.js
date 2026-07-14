@@ -47,7 +47,7 @@ app.get('/', (req, res) => {
             <hr>
                
             <h3>Nuevo Reporte Vecinal (Anónimo)</h3>
-            <form action="/https://reporte-ciudadano-q7yn.onrender.com/registrar-incidencia" method="POST" enctype="multipart/form-data" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <form action="/registrar-incidencia" method="POST" enctype="multipart/form-data" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
                 
                 <label><b>Tipo de Incidencia:</b></label><br>
                 <select name="tipo" style="width:100%; padding:8px; margin:8px 0; border-radius:4px; border:1px solid #ccc;">
