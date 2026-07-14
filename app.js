@@ -218,53 +218,6 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
             <p style="font-size:16px; background:#f8f9fa; padding:12px; border-left:4px solid #2980b9; font-weight:bold;">🏠 ${sector}</p>
         `;
     }
-
-    const cartero = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, 
-        auth: {
-            user: process.env.EMAIL_USER,    
-            pass: process.env.EMAIL_PASS  
-        },
-        tls: {
-            rejectUnauthorized: false 
-        }
-    });
-
-    const opcionesCorreo = {
-        from: '"Sistema de Alertas Comunitarias" <manuelcabezasb1673@gmail.com>', 
-        to: 'manuelcabezasb1673@gmail.com',                                     
-        subject: `🚨 REPORTE URBANO N°${nuevoReporte.id}: ${tipo.toUpperCase()}`,
-        html: `
-            <div style="font-family:Arial, sans-serif; padding:20px; border:1px solid #eee; border-radius:8px; max-width:600px; color:#333;">
-                <h2 style="color:#c0392b; border-bottom:2px solid #c0392b; padding-bottom:10px; margin-top:0;">🚨 ALERTA COMUNAL RECIBIDA (N°${nuevoReporte.id})</h2>
-                
-                <p style="background:#f1f2f6; padding:8px; border-radius:4px; font-size:13px; color:#2f3542;">
-                    📅 <b>Fecha y Hora del Reporte:</b> ${fechaHoraChile}
-                </p>
-
-                <p><strong>Tipo de Incidente:</strong> ${tipo}</p>
-                <p><strong>Descripción del Problema:</strong> ${descripcion}</p>
-                
-                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-                
-                ${bloqueUbicacionCorreo}
-                
-                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-                <p style="font-size:11px; color:#95a5a6; margin-top:20px;">Este es un reporte automatizado del Sistema de Gestión Territorial.</p>
-            </div>
-        `,
-        attachments: archivoFoto ? [{
-            filename: `evidencia_incidencia_${nuevoReporte.id}.jpg`,
-            path: archivoFoto.path
-        }] : []
-    };
-
-    try {
-        await cartero.sendMail(opcionesCorreo);
-        console.log(`✅ ¡Correo N°${nuevoReporte.id} despachado con éxito!`);
-        
         res.send(`
             <meta charset="UTF-8">
             <body style="font-family:Arial, sans-serif; text-align:center; padding:50px; background-color:#f9f9f9;">
@@ -276,11 +229,7 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
                 </div>
             </body>
         `);
-    } catch (error) {
-        console.error("❌ Error al despachar el correo:", error);
-        res.status(500).send("Error en el envío del correo.");
-    }
-});
+    });
 // Encendemos el motor
 app.listen(PORT, () => {
     console.log("\n==================================================");
