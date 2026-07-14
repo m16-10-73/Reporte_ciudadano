@@ -4,7 +4,13 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Las fotos se guardarán en una carpeta llamada 'uploads'
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Configuración de las variables de entorno y Supabase
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
 
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 // Base de datos temporal en memoria
 let reportesMunicipales = [];
 
@@ -41,7 +47,7 @@ app.get('/', (req, res) => {
             <hr>
                
             <h3>Nuevo Reporte Vecinal (Anónimo)</h3>
-            <form action="/registrar-incidencia" method="POST" enctype="multipart/form-data" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <form action="/https://reporte-ciudadano-q7yn.onrender.com/registrar-incidencia" method="POST" enctype="multipart/form-data" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
                 
                 <label><b>Tipo de Incidencia:</b></label><br>
                 <select name="tipo" style="width:100%; padding:8px; margin:8px 0; border-radius:4px; border:1px solid #ccc;">
@@ -156,29 +162,48 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
     const ahora = new Date();
     const fechaHoraChile = ahora.toLocaleString('es-CL', { timeZone: 'America/Santiago' });
 
+    // Definir la ubicación final para consistencia de datos
     let ubicacionFinalEstadistica = sector;
     if (!ubicacionFinalEstadistica || ubicacionFinalEstadistica.trim() === "") {
         ubicacionFinalEstadistica = sectorGPS ? `Coordenadas GPS (${sectorGPS})` : "Coordenadas GPS";
     }
 
-    // Guardamos en la base de datos temporal incluyendo la fecha/hora
+    const nombreArchivoFoto = archivoFoto ? archivoFoto.filename : 'sin-foto';
+
+    // ☁️ GUARDAR REPORTE EN LA NUBE (SUPABASE) con todos los campos necesarios
+    const { data, error } = await supabase
+        .from('informes')
+        .insert([
+            { 
+                descripcion: descripcion, 
+                foto_url: nombreArchivoFoto,
+                fecha: fechaHoraChile 
+            }
+        ])
+        .select();
+    if (error) {
+        console.error('❌ Error al guardar en Supabase:', error.message);
+    } else {
+        console.log('✅ ¡Reporte guardado con éxito en la nube de Supabase!');
+    }
+
+    // Guardamos en la base de datos temporal local
     const nuevoReporte = {
         id: reportesMunicipales.length + 1,
-        fechaHora: fechaHoraChile, // <-- Guardado aquí
+        fechaHora: fechaHoraChile,
         tipo,
         sector: ubicacionFinalEstadistica,
         descripcion,
         latitud: latitud || null,
         longitud: longitud || null,
-        foto: archivoFoto ? archivoFoto.filename : null
+        foto: nombreArchivoFoto
     };
     reportesMunicipales.push(nuevoReporte);
     console.log(`📡 [${fechaHoraChile}] Procesando reporte N°${nuevoReporte.id}: ${tipo}`);
 
-    // Lógica inteligente para armar el bloque de ubicación en el Correo
+    // Lógica para armar el bloque de ubicación en el Correo
     let bloqueUbicacionCorreo = "";
     if (latitud && longitud && latitud !== "" && longitud !== "") {
-        // Caso A: El reporte tiene coordenadas GPS reales
         const linkGoogleMaps = `https://www.google.com/maps?q=${latitud},${longitud}`;
         bloqueUbicacionCorreo = `
             <p><strong>Ubicación:</strong> Detectada vía satélite (Vecino en terreno)</p>
@@ -188,25 +213,24 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
             <br>
         `;
     } else {
-        // Caso B: El reporte se hizo desde la casa usando dirección de texto
         bloqueUbicacionCorreo = `
             <p><strong>Ubicación / Dirección Reportada:</strong></p>
             <p style="font-size:16px; background:#f8f9fa; padding:12px; border-left:4px solid #2980b9; font-weight:bold;">🏠 ${sector}</p>
         `;
     }
 
-   const cartero = nodemailer.createTransport({
-   host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // ¡OJO! Debe ser false para el puerto 587
-    auth: {
-        user: process.env.EMAIL_USER,    
-        pass: process.env.EMAIL_PASS  
-    },
-    tls: {
-        rejectUnauthorized: false // Esto evita que Render bloquee la conexión por seguridad
-    }
-});
+    const cartero = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, 
+        auth: {
+            user: process.env.EMAIL_USER,    
+            pass: process.env.EMAIL_PASS  
+        },
+        tls: {
+            rejectUnauthorized: false 
+        }
+    });
 
     const opcionesCorreo = {
         from: '"Sistema de Alertas Comunitarias" <manuelcabezasb1673@gmail.com>', 
@@ -248,16 +272,15 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
                     <h2 style="color: #27ae60; margin-top:0;">¡Reporte Registrado con Éxito!</h2>
                     <p>La información, la foto y los datos de ubicación geográfica fueron despachados a la central municipal.</p>
                     <br>
-                    <a href="/" style="display:inline-block; background:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">Volver al Panel</a>
+                    <a href="https://reporte-ciudadano-q7yn.onrender.com" style="display:inline-block; background:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">Volver al Panel</a>
                 </div>
             </body>
         `);
     } catch (error) {
         console.error("❌ Error al despachar el correo:", error);
-        res.status(500).send("Error en el envío.");
+        res.status(500).send("Error en el envío del correo.");
     }
 });
-
 // Encendemos el motor
 app.listen(PORT, () => {
     console.log("\n==================================================");
