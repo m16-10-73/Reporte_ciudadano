@@ -10,7 +10,11 @@ const transcriptor = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'manuelcabezasb1673@gmail.com',
-    pass: 'ebtippfdzkonqeou' // Tu clave de aplicación de 16 letras
+    pass: 'ebtippfdzkonqeou' 
+  },
+  tls: {
+    // Esto evita que Render corte la conexión por temas de certificados en la red interna
+    rejectUnauthorized: false
   }
 });
 
