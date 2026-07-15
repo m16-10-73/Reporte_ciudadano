@@ -178,23 +178,40 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
     const nombreArchivoFoto = archivoFoto ? archivoFoto.filename : 'sin-foto';
 
     // ☁️ GUARDAR REPORTE EN LA NUBE (SUPABASE)
-    const { data, error } = await supabase
-        .from('informes')
-        .insert([
-            { 
-                descripcion: descripcion, 
-                foto_url: nombreArchivoFoto,
-                fecha: fechaHoraChile 
-            }
-        ])
-        .select();
+console.log('☁️ Guardando reporte en la nube de Supabase...');
+const { data, error } = await supabase
+    .from('informes')
+    .insert([
+        { 
+            descripcion: descripcion, 
+            foto_url: nombreArchivoFoto,
+            fecha: fechaHoraChile 
+        }
+    ])
+    .select();
 
-    if (error) {
-        console.error('❌ Error al guardar en Supabase:', error.message);
-    } else {
-        console.log('✅ ¡Reporte guardado con éxito en la nube de Supabase!');
+if (error) {
+    console.error('❌ Error al guardar en Supabase:', error);
+    // Aquí puedes manejar el error si Supabase falla
+} else {
+    console.log('✅ ¡Reporte guardado con éxito en la nube de Supabase!');
+
+    // 2. SEGUNDO: ENVIAR EL CORREO DE ALERTA (Solo si se guardó bien en la base de datos)
+    console.log('📬 Iniciando proceso de envío de correo...'); 
+
+    try {
+        console.log('✉️ Llamando a transcriptor.sendMail...'); 
+        await transcriptor.sendMail({
+            from: '"Reporte Ciudadano" <manuelcabezasb1673@gmail.com>',
+            to: 'manuelcabezasb1673@gmail.com',
+            subject: 'Nuevo Reporte de Alerta Comunal',
+            // ... aquí va tu HTML y el resto del contenido de tu correo ...
+        });
+        console.log('📧 Correo de alerta enviado con éxito');
+    } catch (envioError) {
+        console.error('❌ Error detallado al enviar el correo:', envioError); 
     }
-
+}
     // Guardamos en la base de datos temporal local
     const nuevoReporte = {
         id: reportesMunicipales.length + 1,
