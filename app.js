@@ -1,31 +1,32 @@
 const express = require('express');
-const nodemailer = require('nodemailer'); // ¡Aquí activamos al cartero!
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Las fotos se guardarán en una carpeta llamada 'uploads'
 const app = express();
 const PORT = process.env.PORT || 3000;
-const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer'); // Cargado solo una vez
+
 // Configuración de las variables de entorno y Supabase
 const transcriptor = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'manuelcabezasb1673@gmail.com',
-    pass: 'ebtippfdzkonqeou' // Pon la clave sin espacios
+    pass: 'ebtippfdzkonqeou' // Tu clave de aplicación de 16 letras
   }
 });
+
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
+
 // Base de datos temporal en memoria
 let reportesMunicipales = [];
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 1. MOSTRAR EL PANEL (Formulario interactivo en pantalla)
 // 1. MOSTRAR EL PANEL (Formulario interactivo en pantalla)
 app.get('/', (req, res) => {
     let filasTabla = reportesMunicipales.map(r => `
@@ -38,9 +39,6 @@ app.get('/', (req, res) => {
             <td style="padding:10px; border:1px solid #ddd; color:orange;"><b>Pendiente</b></td>
         </tr>
     `).join('');
-
-    // El resto del HTML del formulario sigue exactamente igual hacia abajo, 
-    // solo asegúrate de que los encabezados de la tabla (los <th>) incluyan la nueva columna:
 
     res.send(`
         <!DOCTYPE html>
@@ -99,7 +97,6 @@ app.get('/', (req, res) => {
             </form>
 
             <script>
-                // Activar Geolocalización Automática al cargar si está en 'Sí'
                 function activarGPS() {
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
@@ -117,10 +114,8 @@ app.get('/', (req, res) => {
                     }
                 }
 
-                // Ejecutar al cargar la página
                 activarGPS();
 
-                // Función del Switch para alternar campos
                 function alternarUbicacion() {
                     var seleccion = document.getElementById("ubicacionSwitch").value;
                     var capaDireccion = document.getElementById("capaDireccion");
@@ -131,13 +126,13 @@ app.get('/', (req, res) => {
                         capaDireccion.style.display = "none";
                         capaGPS.style.display = "block";
                         direccionManual.required = false;
-                        direccionManual.value = ""; // Limpia texto manual
-                        activarGPS(); // Vuelve a pedir coordenadas
+                        direccionManual.value = ""; 
+                        activarGPS(); 
                     } else {
                         capaDireccion.style.display = "block";
                         capaGPS.style.display = "none";
-                        direccionManual.required = true; // Hace obligatorio escribir la dirección
-                        document.getElementById('latitud').value = ""; // Borra coordenadas
+                        direccionManual.required = true; 
+                        document.getElementById('latitud').value = ""; 
                         document.getElementById('longitud').value = "";
                     }
                 }
@@ -178,7 +173,7 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
 
     const nombreArchivoFoto = archivoFoto ? archivoFoto.filename : 'sin-foto';
 
-    // ☁️ GUARDAR REPORTE EN LA NUBE (SUPABASE) con todos los campos necesarios
+    // ☁️ GUARDAR REPORTE EN LA NUBE (SUPABASE)
     const { data, error } = await supabase
         .from('informes')
         .insert([
@@ -189,24 +184,11 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
             }
         ])
         .select();
+
     if (error) {
         console.error('❌ Error al guardar en Supabase:', error.message);
     } else {
         console.log('✅ ¡Reporte guardado con éxito en la nube de Supabase!');
-        const opcionesCorreo = {
-  from: 'manuelcabezasb1673@gmail.com',
-  to: 'manuelcabezasb1673@gmail.com', // El correo donde quieres recibir la alerta
-  subject: '🚨 ¡Nueva Alerta Comunitaria Recibida!',
-  text: `Se ha registrado un nuevo reporte.\n\nTipo de reporte: ${nuevoReporte.tipo || 'No especificado'}\nDetalle: ${nuevoReporte.descripcion || 'Sin descripción'}`
-};
-
-transcriptor.sendMail(opcionesCorreo, (error, info) => {
-  if (error) {
-    console.log('❌ Error al enviar el correo:', error);
-  } else {
-    console.log('📧 Correo de alerta enviado con éxito:', info.response);
-  }
-});
     }
 
     // Guardamos en la base de datos temporal local
@@ -240,22 +222,51 @@ transcriptor.sendMail(opcionesCorreo, (error, info) => {
             <p style="font-size:16px; background:#f8f9fa; padding:12px; border-left:4px solid #2980b9; font-weight:bold;">🏠 ${sector}</p>
         `;
     }
-        res.send(`
-            <meta charset="UTF-8">
-            <body style="font-family:Arial, sans-serif; text-align:center; padding:50px; background-color:#f9f9f9;">
-                <div style="background:white; padding:30px; border-radius:8px; display:inline-block; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                    <h2 style="color: #27ae60; margin-top:0;">¡Reporte Registrado con Éxito!</h2>
-                    <p>La información, la foto y los datos de ubicación geográfica fueron despachados a la central municipal.</p>
-                    <br>
-                    <a href="https://reporte-ciudadano-q7yn.onrender.com" style="display:inline-block; background:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">Volver al Panel</a>
-                </div>
-            </body>
-        `);
+
+    // 📧 DISPARAR CORREO HTML BIEN PRESENTABLE DESPUÉS DE QUE SE CREÓ "nuevoReporte"
+    const opcionesCorreo = {
+      from: 'manuelcabezasb1673@gmail.com',
+      to: 'manuelcabezasb1673@gmail.com', 
+      subject: `🚨 ¡Nueva Alerta Comunitaria! - ${nuevoReporte.tipo}`,
+      html: `
+        <div style="font-family:Arial, sans-serif; padding:20px; border:1px solid #ccc; border-radius:8px; max-width:600px;">
+          <h2 style="color:#d35400;">⚠️ Alerta de Incidencia Recibida</h2>
+          <hr>
+          <p><strong>Tipo de problema:</strong> ${nuevoReporte.tipo}</p>
+          <p><strong>Descripción:</strong> ${nuevoReporte.descripcion}</p>
+          <p><strong>Fecha y Hora:</strong> ${nuevoReporte.fechaHora}</p>
+          ${bloqueUbicacionCorreo}
+          <br>
+          <p style="color:#7f8c8d; font-size:12px;">Este correo se generó automáticamente desde el prototipo Reporte Ciudadano.</p>
+        </div>
+      `
+    };
+
+    transcriptor.sendMail(opcionesCorreo, (errorCorreo, info) => {
+      if (errorCorreo) {
+        console.log('❌ Error al enviar el correo:', errorCorreo);
+      } else {
+        console.log('📧 Correo de alerta enviado con éxito:', info.response);
+      }
     });
+
+    res.send(`
+        <meta charset="UTF-8">
+        <body style="font-family:Arial, sans-serif; text-align:center; padding:50px; background-color:#f9f9f9;">
+            <div style="background:white; padding:30px; border-radius:8px; display:inline-block; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                <h2 style="color: #27ae60; margin-top:0;">¡Reporte Registrado con Éxito!</h2>
+                <p>La información, la foto y los datos de ubicación geográfica fueron despachados a la central municipal.</p>
+                <br>
+                <a href="https://reporte-ciudadano-q7yn.onrender.com" style="display:inline-block; background:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">Volver al Panel</a>
+            </div>
+        </body>
+    `);
+});
+
 // Encendemos el motor
 app.listen(PORT, () => {
     console.log("\n==================================================");
     console.log("🚀 Servidor de Alertas Comunales Iniciado con Éxito");
-    console.log(`Corriendo en http://localhost:3000`);
+    console.log(`Corriendo en el puerto ${PORT}`);
     console.log("==================================================\n");
 });
