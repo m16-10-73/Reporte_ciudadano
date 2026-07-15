@@ -4,7 +4,15 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Las fotos se guardarán en una carpeta llamada 'uploads'
 const app = express();
 const PORT = process.env.PORT || 3000;
+const nodemailer = require('nodemailer');
 // Configuración de las variables de entorno y Supabase
+const transcriptor = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'manuelcabezasb1673@gmail.com',
+    pass: 'ebtippfdzkonqeou' // Pon la clave sin espacios
+  }
+});
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
@@ -185,6 +193,20 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
         console.error('❌ Error al guardar en Supabase:', error.message);
     } else {
         console.log('✅ ¡Reporte guardado con éxito en la nube de Supabase!');
+        const opcionesCorreo = {
+  from: 'manuelcabezasb1673@gmail.com',
+  to: 'manuelcabezasb1673@gmail.com', // El correo donde quieres recibir la alerta
+  subject: '🚨 ¡Nueva Alerta Comunitaria Recibida!',
+  text: `Se ha registrado un nuevo reporte.\n\nTipo de reporte: ${nuevoReporte.tipo || 'No especificado'}\nDetalle: ${nuevoReporte.descripcion || 'Sin descripción'}`
+};
+
+transcriptor.sendMail(opcionesCorreo, (error, info) => {
+  if (error) {
+    console.log('❌ Error al enviar el correo:', error);
+  } else {
+    console.log('📧 Correo de alerta enviado con éxito:', info.response);
+  }
+});
     }
 
     // Guardamos en la base de datos temporal local
