@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Ciudadano - Coquimbo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f7;
+            margin: 0;
+            padding: 15px;
+            color: #2c3e50;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="email"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+        .btn-submit {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-submit:hover {
+            background-color: #d35400;
+        }
+        .gps-box {
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+        .optional-badge {
+            background: #95a5a6;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>🚨 Reportar Incidencia</h2>
+    <p style="text-align:center; font-size:13px; color:#7f8c8d; margin-top:-10px;">Comuna de Coquimbo</p>
+    
+    <form action="/registrar-incidencia" method="POST" enctype="multipart/form-data" id="formularioReporte">
+        
+        <!-- Datos de Identificación (Nuevos campos) -->
+        <div class="form-group">
+            <label for="nombre">Tu Nombre Completo *</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Ej. Juan Pérez" required>
+        </div>
+
+        <div class="form-group">
+            <label for="telefono">Teléfono de Contacto <span class="optional-badge">Opcional</span></label>
+            <input type="text" id="telefono" name="telefono" placeholder="Ej. +56 9 1234 5678">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Correo Electrónico <span class="optional-badge">Opcional</span></label>
+            <input type="email" id="email" name="email" placeholder="Ej. juan@correo.cl">
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <!-- Datos del Reporte -->
+        <div class="form-group">
+            <label for="tipo">¿Cuál es el problema?</label>
+            <select name="tipo" id="tipo" required>
+                <option value="Bache / Evento Vial">🕳️ Bache o Evento Vial</option>
+                <option value="Luminaria Defectuosa">💡 Luminaria Defectuosa</option>
+                <option value="Acumulación de Basura">🗑️ Acumulación de Basura</option>
+                <option value="Semáforo Malogrado">🚦 Semáforo Malogrado</option>
+                <option value="Otro">⚠️ Otro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="sector">Dirección o Punto de Referencia</label>
+            <input type="text" id="sector" name="sector" placeholder="Ej: Aldunate con Borgoño" required>
+        </div>
+
+        <!-- Geo-Localización Automática (Invisible pero se procesa) -->
+        <div class="gps-box" id="gpsStatus">
+            📍 Detectando coordenadas geográficas...
+        </div>
+        <input type="hidden" id="latitud" name="latitud">
+        <input type="hidden" id="longitud" name="longitud">
+        <input type="hidden" id="sectorGPS" name="sectorGPS">
+
+        <div class="form-group">
+            <label for="descripcion">Descripción del Problema</label>
+            <textarea id="descripcion" name="descripcion" placeholder="Explica detalladamente la situación..." required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="foto">Capturar / Adjuntar Foto de Evidencia</label>
+            <input type="file" id="foto" name="foto" accept="image/*" capture="environment">
+        </div>
+
+        <button type="submit" class="btn-submit">Enviar Reporte Municipal</button>
+    </form>
+</div>
+
+<script>
+    // Código para geolocalizar de forma automática al abrir la app
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                document.getElementById('latitud').value = lat;
+                document.getElementById('longitud').value = lon;
+                document.getElementById('sectorGPS').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                document.getElementById('gpsStatus').innerHTML = `📍 ¡Ubicación Satelital Confirmada! (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+                document.getElementById('gpsStatus').style.background = '#e8f8f5';
+                document.getElementById('gpsStatus').style.borderLeft = '4px solid #2ecc71';
+            },
+            (error) => {
+                document.getElementById('gpsStatus').innerHTML = `⚠️ No se pudo obtener el GPS exacto. Usaremos la dirección escrita.`;
+                document.getElementById('gpsStatus').style.background = '#fef9e7';
+                document.getElementById('gpsStatus').style.borderLeft = '4px solid #f1c40f';
+            }
+        );
+    } else {
+        document.getElementById('gpsStatus').innerHTML = `⚠️ Tu navegador no soporta geolocalización.`;
+    }
+</script>
+</body>
+</html>

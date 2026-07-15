@@ -1,285 +1,337 @@
+require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' }); // Las fotos se guardarán en una carpeta llamada 'uploads'
+const path = require('path');
+const fs = require('fs');
+const { createClient } = require('@supabase/supabase-api-js'); // O '@supabase/supabase-js' según tu package.json
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-const nodemailer = require('nodemailer'); 
 
-require('dotenv').config();
-const { createClient } = require('@supabase/supabase-js');
-
-// 1. CONFIGURACIÓN DEL TRANSPORTADOR DE CORREO (Optimizado para Render sin congelamientos)
-const transcriptor = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // false para usar STARTTLS en puerto 587
-  auth: {
-    user: 'manuelcabezasb1673@gmail.com',
-    pass: 'ebtippfdzkonqeou' 
-  },
-  tls: {
-    // Evita bloqueos por negociación de certificados en la red de Render
-    rejectUnauthorized: false,
-    minVersion: 'TLSv1.2'
-  },
-  connectionTimeout: 10000, // 10 segundos máximo para conectar
-  greetingTimeout: 10000     // 10 segundos máximo para el saludo inicial
-});
-
+// Configuración de Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Base de datos temporal en memoria para el historial visual
-let reportesMunicipales = [];
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-// 2. MOSTRAR EL PANEL INTERACTIVO
-app.get('/', (req, res) => {
-    let filasTabla = reportesMunicipales.map(r => `
-        <tr>
-            <td style="padding:10px; border:1px solid #ddd;">${r.id}</td>
-            <td style="padding:10px; border:1px solid #ddd; font-size:13px; color:#555;">${r.fechaHora}</td>
-            <td style="padding:10px; border:1px solid #ddd;"><b>${r.tipo}</b></td>
-            <td style="padding:10px; border:1px solid #ddd;">${r.sector}</td>
-            <td style="padding:10px; border:1px solid #ddd;">${r.descripcion}</td>
-            <td style="padding:10px; border:1px solid #ddd; color:orange;"><b>Pendiente</b></td>
-        </tr>
-    `).join('');
-
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Sistema de Reportes Comunales</title>
-        </head>
-        <body style="font-family:Arial, sans-serif; max-width:800px; margin:40px auto; padding:20px; background-color:#f9f9f9;">
-            <h1 style="color:#2c3e50;">🏛️ Sistema de Reportes Comunales</h1>
-            <p>Gestión Comunitaria de Incidencias de Infraestructura</p>
-            <hr>
-               
-            <h3>Nuevo Reporte Vecinal (Anónimo)</h3>
-            <form action="/registrar-incidencia" method="POST" enctype="multipart/form-data" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                
-                <label><b>Tipo de Incidencia:</b></label><br>
-                <select name="tipo" style="width:100%; padding:8px; margin:8px 0; border-radius:4px; border:1px solid #ccc;">
-                    <option value="Pavimentación y baches">Pavimentación y baches</option>
-                    <option value="Alcantarillado y aguas servidas">Alcantarillado y aguas servidas</option>
-                    <option value="Aseo y ornato">Aseo y ornato</option>
-                    <option value="Alumbrado público">Alumbrado público</option>
-                </select><br><br>
-
-                <div style="margin-bottom: 15px;">
-                    <label><b>¿Te encuentras en el lugar del incidente?</b></label><br>
-                    <select id="ubicacionSwitch" onchange="alternarUbicacion()" style="width:100%; padding:8px; margin:8px 0; border-radius:4px; border:1px solid #ccc;">
-                        <option value="si">Sí, capturar mi ubicación GPS actual</option>
-                        <option value="no">No, reportar una dirección diferente</option>
-                    </select>
-                </div>
-
-                <div id="capaDireccion" style="margin-bottom: 15px; display: none;">
-                    <label><b>Dirección Exacta del Incidente (Calle, Número, Referencia):</b></label><br>
-                    <input type="text" id="direccionManual" name="sector" placeholder="Ej: Calle Diego Portales 123, Coquimbo" style="width:100%; padding:8px; margin:8px 0; border-radius:4px; border:1px solid #ccc;">
-                </div>
-
-                <div id="capaGPS" style="margin-bottom: 15px;">
-                    <p id="estado-gps" style="color:#7f8c8d; font-size:13px; font-style:italic; margin: 8px 0;">🌍 Esperando georreferenciación satelital...</p>
-                    <div id="capaSectorGps">
-                        <label><b>Referencia del Sector (Opcional):</b></label><br>
-                        <input type="text" id="sectorGPS" name="sectorGPS" placeholder="Ej: Cerca de la plaza principal" style="width:100%; padding:8px; margin:8px 0; border-radius:4px; border:1px solid #ccc;">
-                    </div>
-                </div>
-
-                <input type="hidden" id="latitud" name="latitud">
-                <input type="hidden" id="longitud" name="longitud">
-
-                <label><b>Descripción del problema:</b></label><br>
-                <textarea name="descripcion" placeholder="Detalle la situación aquí..." required style="width:100%; padding:8px; margin:8px 0; height:80px; border-radius:4px; border:1px solid #ccc;"></textarea><br><br>
-
-                <label><b>Evidencia Fotográfica:</b></label><br>
-                <input type="file" name="foto" accept="image/*" capture="environment" style="width:100%; padding:8px; margin:8px 0;"><br><br>
-
-                <button type="submit" style="background:#27ae60; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:16px; font-weight:bold; width:100%;">Enviar Alerta a Central</button>
-            </form>
-
-            <script>
-                function activarGPS() {
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (posicion) => {
-                                document.getElementById('latitud').value = posicion.coords.latitude;
-                                document.getElementById('longitud').value = posicion.coords.longitude;
-                                document.getElementById('estado-gps').innerHTML = "✅ Ubicación satelital GPS vinculada con éxito.";
-                                document.getElementById('estado-gps').style.color = "#27ae60";
-                            },
-                            (error) => {
-                                document.getElementById('estado-gps').innerHTML = "⚠️ GPS no disponible. Por favor elige la opción de escribir dirección.";
-                                document.getElementById('estado-gps').style.color = "#c0392b";
-                            }
-                        );
-                    }
-                }
-
-                activarGPS();
-
-                function alternarUbicacion() {
-                    var seleccion = document.getElementById("ubicacionSwitch").value;
-                    var capaDireccion = document.getElementById("capaDireccion");
-                    var capaGPS = document.getElementById("capaGPS");
-                    var direccionManual = document.getElementById("direccionManual");
-
-                    if (seleccion === "si") {
-                        capaDireccion.style.display = "none";
-                        capaGPS.style.display = "block";
-                        direccionManual.required = false;
-                        direccionManual.value = ""; 
-                        activarGPS(); 
-                    } else {
-                        capaDireccion.style.display = "block";
-                        capaGPS.style.display = "none";
-                        direccionManual.required = true; 
-                        document.getElementById('latitud').value = ""; 
-                        document.getElementById('longitud').value = "";
-                    }
-                }
-            </script>
-
-            <br><hr><br>
-            <h3>Historial de Reportes en la Comuna</h3>
-            <table style="width:100%; border-collapse:collapse; background:white;">
-                <tr style="background:#2c3e50; color:white;">
-                    <th style="padding:10px; border:1px solid #ddd;">ID</th>
-                    <th style="padding:10px; border:1px solid #ddd;">Fecha / Hora</th>
-                    <th style="padding:10px; border:1px solid #ddd;">Tipo</th>
-                    <th style="padding:10px; border:1px solid #ddd;">Sector / Dirección</th>
-                    <th style="padding:10px; border:1px solid #ddd;">Descripción</th>
-                    <th style="padding:10px; border:1px solid #ddd;">Estado</th>
-                </tr>
-                \${filasTabla.length > 0 ? filasTabla : '<tr><td colspan="6" style="text-align:center; padding:20px; color:#777;">No hay reportes ingresados aún.</td></tr>'}
-            </table>
-        </body>
-        </html>
-    `);
+// Configuración local temporal para Multer (recibe la foto antes de mandarla a Supabase)
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = './uploads';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, 'foto-' + Date.now() + path.extname(file.originalname));
+    }
 });
+const upload = multer({ storage: storage });
 
-// 3. PROCESAR EL REPORTE CON FOTO, GPS Y ENVIAR EL CORREO
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public')); // Para servir tu HTML principal
+app.use('/uploads', express.static('uploads'));
+
+// ==========================================
+// 🚀 1. REGISTRAR INCIDENCIA (VECINO SUBE REPORTE)
+// ==========================================
 app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
-    let { tipo, sector, sectorGPS, descripcion, latitud, longitud } = req.body;
-    const archivoFoto = req.file; 
+    const { tipo, sector, sectorGPS, descripcion, latitud, longitud, nombre, telefono, email } = req.body;
+    const archivoFoto = req.file;
 
-    // 🕒 CAPTURA AUTOMÁTICA DE FECHA Y HORA EN CHILE
+    // Capturar fecha y hora exacta en Chile
     const ahora = new Date();
     const fechaHoraChile = ahora.toLocaleString('es-CL', { timeZone: 'America/Santiago' });
 
-    // Definir la ubicación final para consistencia de datos
-    let ubicacionFinalEstadistica = sector;
-    if (!ubicacionFinalEstadistica || ubicacionFinalEstadistica.trim() === "") {
-        ubicacionFinalEstadistica = sectorGPS ? `Coordenadas GPS (\${sectorGPS})` : "Coordenadas GPS";
+    let ubicacionFinal = sector;
+    if (!ubicacionFinal || ubicacionFinal.trim() === "") {
+        ubicacionFinal = sectorGPS ? `GPS: ${sectorGPS}` : "Coordenadas GPS";
     }
 
-    const nombreArchivoFoto = archivoFoto ? archivoFoto.filename : 'sin-foto';
+    let urlPublicaFoto = null;
 
     try {
-        // ☁️ 1. GUARDAR REPORTE EN LA NUBE (SUPABASE)
-        console.log('☁️ Guardando reporte en la nube de Supabase...');
-        const { data, error } = await supabase
+        // Subir foto al Storage de Supabase si existe
+        if (archivoFoto) {
+            const rutaArchivoLocal = archivoFoto.path;
+            const nombreArchivoEnNube = `${Date.now()}-${archivoFoto.filename}`;
+            const bufferArchivo = fs.readFileSync(rutaArchivoLocal);
+
+            console.log('☁️ Subiendo foto al Storage de Supabase...');
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('fotos-reportes')
+                .upload(nombreArchivoEnNube, bufferArchivo, {
+                    contentType: archivoFoto.mimetype,
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (uploadError) {
+                console.error('❌ Error al subir imagen al Storage:', uploadError.message);
+            } else {
+                // Obtener la URL pública de la foto recién subida
+                const { data: urlData } = supabase.storage
+                    .from('fotos-reportes')
+                    .getPublicUrl(nombreArchivoEnNube);
+
+                urlPublicaFoto = urlData.publicUrl;
+                console.log('✅ Foto subida exitosamente. URL:', urlPublicaFoto);
+            }
+
+            // Limpiar el archivo local del servidor Render para no acumular basura
+            fs.unlinkSync(rutaArchivoLocal);
+        }
+
+        // Insertar datos en la tabla de Supabase (respetando tus columnas exactas)
+        console.log('☁️ Guardando datos del reporte en la tabla de Supabase...');
+        const { error: insertError } = await supabase
             .from('informes')
             .insert([
-                { 
-                    descripcion: descripcion, 
-                    foto_url: nombreArchivoFoto,
-                    fecha: fechaHoraChile 
+                {
+                    descripcion: descripcion,
+                    tipo: tipo,
+                    sector: ubicacionFinal,
+                    latitud: latitud || null,
+                    longitud: longitud || null,
+                    foto_url: urlPublicaFoto || 'sin-foto',
+                    fecha: fechaHoraChile,
+                    Estado: 'Pendiente', // Tu columna con "E" mayúscula
+                    Nombre_de_quien_reporta: nombre || 'Anónimo', // Tu columna
+                    Teléfono: telefono || null, // Tu columna con tilde
+                    email: email || null // Tu columna
                 }
-            ])
-            .select();
+            ]);
 
-        if (error) {
-            console.error('❌ Error al guardar en Supabase:', error);
-        } else {
-            console.log('✅ ¡Reporte guardado con éxito en la nube de Supabase!');
+        if (insertError) {
+            throw insertError;
         }
 
-        // 2. CREAR OBJETO DE REPORTE LOCAL
-        const nuevoReporte = {
-            id: reportesMunicipales.length + 1,
-            fechaHora: fechaHoraChile,
-            tipo,
-            sector: ubicacionFinalEstadistica,
-            descripcion,
-            latitud: latitud || null,
-            longitud: longitud || null,
-            foto: nombreArchivoFoto
-        };
-        reportesMunicipales.push(nuevoReporte);
-        console.log(`📡 [\${fechaHoraChile}] Procesando reporte N°\${nuevoReporte.id}: \${tipo}`);
+        console.log('✅ ¡Todo guardado con éxito!');
 
-        // 3. ARMAR EL CORREO CON MAPA O DIRECCIÓN ESCRITA
-        let bloqueUbicacionCorreo = "";
-        if (latitud && longitud && latitud !== "" && longitud !== "") {
-            const linkGoogleMaps = `https://www.google.com/maps?q=\${latitud},\${longitud}`;
-            bloqueUbicacionCorreo = `
-                <p><strong>Ubicación:</strong> Detectada vía satélite (Vecino en terreno)</p>
-                <p><strong>Referencia escrita:</strong> \${sectorGPS || "Ninguna"}</p>
-                <br>
-                <a href="\${linkGoogleMaps}" target="_blank" style="background:#2980b9; color:white; padding:12px 20px; text-decoration:none; border-radius:4px; display:inline-block; font-weight:bold;">📍 VER UBICACIÓN EXACTA EN GOOGLE MAPS</a>
-                <br>
-            `;
-        } else {
-            bloqueUbicacionCorreo = `
-                <p><strong>Ubicación / Dirección Reportada:</strong></p>
-                <p style="font-size:16px; background:#f8f9fa; padding:12px; border-left:4px solid #2980b9; font-weight:bold;">🏠 \${sector}</p>
-            `;
-        }
+        // Enviar pantalla de éxito al vecino de inmediato
+        res.send(`
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <body style="font-family:Arial, sans-serif; text-align:center; padding:50px; background-color:#f4f6f7;">
+                <div style="background:white; padding:40px; border-radius:12px; display:inline-block; box-shadow:0 4px 15px rgba(0,0,0,0.1); max-width:500px;">
+                    <div style="font-size: 60px; color: #2ecc71;">✓</div>
+                    <h2 style="color: #2c3e50; margin-top:10px;">¡Reporte Enviado con Éxito!</h2>
+                    <p style="color: #7f8c8d; line-height: 1.5;">Hola <strong>${nombre}</strong>, tu reporte sobre <strong>${tipo}</strong> ha sido registrado en nuestro sistema municipal bajo el estado <strong>Pendiente</strong>.</p>
+                    <p style="color: #7f8c8d; font-size:14px;">La municipalidad ya puede visualizar tu alerta.</p>
+                    <br>
+                    <a href="/" style="display:inline-block; background:#2980b9; color:white; padding:12px 25px; text-decoration:none; border-radius:6px; font-weight:bold;">Registrar Otro Reporte</a>
+                    <a href="/ver-reportes" style="display:inline-block; background:#2c3e50; color:white; padding:12px 25px; text-decoration:none; border-radius:6px; font-weight:bold; margin-left:10px;">Ver mis reportes</a>
+                </div>
+            </body>
+        `);
 
-        const opcionesCorreo = {
-          from: '"Reporte Ciudadano" <manuelcabezasb1673@gmail.com>',
-          to: 'manuelcabezasb1673@gmail.com', 
-          subject: `🚨 ¡Nueva Alerta Comunitaria! - \${nuevoReporte.tipo}`,
-          html: `
-            <div style="font-family:Arial, sans-serif; padding:20px; border:1px solid #ccc; border-radius:8px; max-width:600px;">
-              <h2 style="color:#d35400;">⚠️ Alerta de Incidencia Recibida</h2>
-              <hr>
-              <p><strong>Tipo de problema:</strong> \${nuevoReporte.tipo}</p>
-              <p><strong>Descripción:</strong> \${nuevoReporte.descripcion}</p>
-              <p><strong>Fecha y Hora:</strong> \${nuevoReporte.fechaHora}</p>
-              \${bloqueUbicacionCorreo}
-              <br>
-              <p style="color:#7f8c8d; font-size:12px;">Este correo se generó automáticamente desde el prototipo Reporte Ciudadano.</p>
-            </div>
-          `
-        };
-
-        // ☁️ 4. DISPARAR EL CORREO DE ALERTA DE FORMA ASÍNCRONA
-        console.log('📬 Iniciando proceso de envío de correo...'); 
-        console.log('✉️ Llamando a transcriptor.sendMail...'); 
-
-        await transcriptor.sendMail(opcionesCorreo);
-        console.log('📧 Correo de alerta enviado con éxito');
-
-    } catch (errorFlujo) {
-        console.error('❌ Error general detectado en el flujo:', errorFlujo);
+    } catch (error) {
+        console.error('❌ Error en el flujo:', error.message);
+        res.status(500).send('Ocurrió un error al procesar el reporte.');
     }
-
-    res.send(`
-        <meta charset="UTF-8">
-        <body style="font-family:Arial, sans-serif; text-align:center; padding:50px; background-color:#f9f9f9;">
-            <div style="background:white; padding:30px; border-radius:8px; display:inline-block; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                <h2 style="color: #27ae60; margin-top:0;">¡Reporte Registrado con Éxito!</h2>
-                <p>La información, la foto y los datos de ubicación geográfica fueron despachados a la central municipal.</p>
-                <br>
-                <a href="https://reporte-ciudadano-q7yn.onrender.com" style="display:inline-block; background:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">Volver al Panel</a>
-            </div>
-        </body>
-    `);
 });
 
-// Encendemos el motor
+// ==========================================
+// 👥 2. VISTA PÚBLICA (EL CIUDADANO VE SUS REPORTES)
+// ==========================================
+app.get('/ver-reportes', async (req, res) => {
+    try {
+        const { data: reportes, error } = await supabase
+            .from('informes')
+            .select('*')
+            .order('id', { ascending: false }); // Mostrar los más nuevos arriba
+
+        if (error) throw error;
+
+        let filasTabla = '';
+        reportes.forEach(rep => {
+            let badgeEstado = '';
+            if (rep.Estado === 'Pendiente') badgeEstado = '<span style="background:#f1c40f; color:black; padding:4px 8px; border-radius:4px; font-weight:bold;">🟡 Pendiente</span>';
+            else if (rep.Estado === 'En Proceso') badgeEstado = '<span style="background:#3498db; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">🔵 En Proceso</span>';
+            else if (rep.Estado === 'Solucionado') badgeExchange = '<span style="background:#2ecc71; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">🟢 Solucionado</span>';
+            else badgeEstado = `<span style="background:#95a5a6; color:white; padding:4px 8px; border-radius:4px;">${rep.Estado}</span>`;
+
+            const imagenHTML = rep.foto_url && rep.foto_url !== 'sin-foto' 
+                ? `<a href="${rep.foto_url}" target="_blank"><img src="${rep.foto_url}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;"></a>`
+                : '<span style="color:#aaa; font-size:12px;">Sin foto</span>';
+
+            filasTabla += `
+                <tr style="border-bottom:1px solid #ddd;">
+                    <td style="padding:12px;">${rep.fecha || 'Sin fecha'}</td>
+                    <td style="padding:12px; font-weight:bold;">${rep.tipo || 'General'}</td>
+                    <td style="padding:12px;">${rep.sector || 'No especificado'}</td>
+                    <td style="padding:12px;">${rep.descripcion || ''}</td>
+                    <td style="padding:12px; text-align:center;">${imagenHTML}</td>
+                    <td style="padding:12px; text-align:center;">${badgeEstado}</td>
+                </tr>
+            `;
+        });
+
+        res.send(`
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Portal de Reportes Ciudadanos</title>
+            <body style="font-family:Arial, sans-serif; background:#f4f6f7; padding:20px; color:#2c3e50;">
+                <div style="max-width:1100px; margin:0 auto; background:white; padding:30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+                    <h1 style="color:#2c3e50; border-bottom:3px solid #3498db; padding-bottom:10px; margin-top:0;">📋 Reportes Comunitarios</h1>
+                    <p style="color:#7f8c8d;">Consulta aquí si tu requerimiento ya fue acogido o solucionado por el equipo municipal.</p>
+                    <a href="/" style="display:inline-block; background:#3498db; color:white; padding:10px 15px; text-decoration:none; border-radius:4px; font-weight:bold; margin-bottom:20px;">← Subir un Nuevo Reporte</a>
+                    
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; min-width:700px;">
+                            <thead>
+                                <tr style="background:#2c3e50; color:white; text-align:left;">
+                                    <th style="padding:12px;">Fecha/Hora</th>
+                                    <th style="padding:12px;">Tipo</th>
+                                    <th style="padding:12px;">Ubicación</th>
+                                    <th style="padding:12px;">Descripción</th>
+                                    <th style="padding:12px; text-align:center;">Evidencia</th>
+                                    <th style="padding:12px; text-align:center;">Estado actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasTabla || '<tr><td colspan="6" style="padding:20px; text-align:center; color:#95a5a6;">Aún no hay reportes registrados.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </body>
+        `);
+    } catch (err) {
+        res.status(500).send("Error al cargar los reportes.");
+    }
+});
+
+// ==========================================
+// 👮 3. VISTA DEL ADMINISTRADOR MUNICIPAL
+// ==========================================
+app.get('/admin', async (req, res) => {
+    try {
+        const { data: reportes, error } = await supabase
+            .from('informes')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        let filasTabla = '';
+        reportes.forEach(rep => {
+            const imagenHTML = rep.foto_url && rep.foto_url !== 'sin-foto'
+                ? `<a href="${rep.foto_url}" target="_blank"><img src="${rep.foto_url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #ccc;"></a>`
+                : '<span style="color:#aaa;">Sin foto</span>';
+
+            // Marcador de selección para los estados
+            const selectEstado = `
+                <select onchange="cambiarEstado(${rep.id}, this.value)" style="padding:8px; border-radius:4px; font-weight:bold; border:1px solid #ccc; background:#fff; cursor:pointer;">
+                    <option value="Pendiente" ${rep.Estado === 'Pendiente' ? 'selected' : ''} style="color:black;">🟡 Pendiente</option>
+                    <option value="En Proceso" ${rep.Estado === 'En Proceso' ? 'selected' : ''} style="color:black;">🔵 En Proceso</option>
+                    <option value="Solucionado" ${rep.Estado === 'Solucionado' ? 'selected' : ''} style="color:black;">🟢 Solucionado</option>
+                </select>
+            `;
+
+            filasTabla += `
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:12px;">${rep.id}</td>
+                    <td style="padding:12px;">${rep.fecha || ''}</td>
+                    <td style="padding:12px; font-weight:bold; color:#e67e22;">${rep.tipo || ''}</td>
+                    <td style="padding:12px;">${rep.sector || ''}</td>
+                    <td style="padding:12px;">
+                        <strong>${rep.Nombre_de_quien_reporta || 'Anónimo'}</strong><br>
+                        <span style="font-size:12px; color:#7f8c8d;">
+                            📞 ${rep.Teléfono || 'Sin Teléfono'}<br>
+                            ✉️ ${rep.email || 'Sin Email'}
+                        </span>
+                    </td>
+                    <td style="padding:12px;">${rep.descripcion || ''}</td>
+                    <td style="padding:12px; text-align:center;">${imagenHTML}</td>
+                    <td style="padding:12px; text-align:center;">${selectEstado}</td>
+                </tr>
+            `;
+        });
+
+        res.send(`
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Panel de Control Municipal - Reporte Ciudadano</title>
+            <body style="font-family:Arial, sans-serif; background:#2c3e50; padding:25px; margin:0; color:#333;">
+                <div style="max-width:1300px; margin:0 auto; background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #e67e22; padding-bottom:15px; margin-bottom:20px;">
+                        <h1 style="margin:0; color:#2c3e50;">👮 Panel de Control - Administración Municipal</h1>
+                        <span style="background:#e67e22; color:white; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">Central Coquimbo</span>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; min-width:900px;">
+                            <thead>
+                                <tr style="background:#34495e; color:white; text-align:left;">
+                                    <th style="padding:12px; width:50px;">ID</th>
+                                    <th style="padding:12px;">Fecha</th>
+                                    <th style="padding:12px;">Incidencia</th>
+                                    <th style="padding:12px;">Sector</th>
+                                    <th style="padding:12px;">Denunciante</th>
+                                    <th style="padding:12px;">Descripción</th>
+                                    <th style="padding:12px; text-align:center;">Foto</th>
+                                    <th style="padding:12px; text-align:center;">Cambiar Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasTabla || '<tr><td colspan="8" style="padding:20px; text-align:center; color:#95a5a6;">No hay registros pendientes.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <script>
+                    async function cambiarEstado(id, nuevoEstado) {
+                        try {
+                            const respuesta = await fetch('/actualizar-estado', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id, estado: nuevoEstado })
+                            });
+                            
+                            const resultado = await respuesta.json();
+                            if (resultado.success) {
+                                alert("Estado del reporte #" + id + " actualizado correctamente a: " + nuevoEstado);
+                            } else {
+                                alert("Error al guardar los cambios: " + resultado.error);
+                            }
+                        } catch (error) {
+                            alert("Error de conexión al intentar cambiar el estado.");
+                        }
+                    }
+                </script>
+            </body>
+        `);
+    } catch (err) {
+        res.status(500).send("Error al cargar el panel de administración.");
+    }
+});
+
+// ==========================================
+// 🔄 4. ACTUALIZAR ESTADO (PETICIÓN INTERNA DEL ADMIN)
+// ==========================================
+app.post('/actualizar-estado', async (req, res) => {
+    const { id, estado } = req.body;
+
+    try {
+        const { error } = await supabase
+            .from('informes')
+            .update({ Estado: estado }) // Tu columna con "E" mayúscula
+            .eq('id', id);
+
+        if (error) throw error;
+
+        console.log(`🔄 Reporte #${id} actualizado a [${estado}]`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("❌ Error al actualizar estado:", err.message);
+        res.json({ success: false, error: err.message });
+    }
+});
+
 app.listen(PORT, () => {
-    console.log("\n==================================================");
-    console.log("🚀 Servidor de Alertas Comunales Iniciado con Éxito");
-    console.log(`Corriendo en el puerto \${PORT}`);
-    console.log("==================================================\n");
+    console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
