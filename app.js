@@ -136,72 +136,9 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
 // ==========================================
 // 👥 2. VISTA PÚBLICA (EL CIUDADANO VE SUS REPORTES)
 // ==========================================
-app.get('/ver-reportes', async (req, res) => {
-    try {
-        const { data: reportes, error } = await supabase
-            .from('informes')
-            .select('*')
-            .order('id', { ascending: false }); // Mostrar los más nuevos arriba
-
-        if (error) throw error;
-
-        let filasTabla = '';
-        reportes.forEach(rep => {
-            let badgeEstado = '';
-            if (rep.Estado === 'Pendiente') badgeEstado = '<span style="background:#f1c40f; color:black; padding:4px 8px; border-radius:4px; font-weight:bold;">🟡 Pendiente</span>';
-            else if (rep.Estado === 'En Proceso') badgeEstado = '<span style="background:#3498db; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">🔵 En Proceso</span>';
-            else if (rep.Estado === 'Solucionado') badgeExchange = '<span style="background:#2ecc71; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">🟢 Solucionado</span>';
-            else badgeEstado = `<span style="background:#95a5a6; color:white; padding:4px 8px; border-radius:4px;">${rep.Estado}</span>`;
-
-            const imagenHTML = rep.foto_url && rep.foto_url !== 'sin-foto' 
-                ? `<a href="${rep.foto_url}" target="_blank"><img src="${rep.foto_url}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;"></a>`
-                : '<span style="color:#aaa; font-size:12px;">Sin foto</span>';
-
-            filasTabla += `
-                <tr style="border-bottom:1px solid #ddd;">
-                    <td style="padding:12px;">${rep.fecha || 'Sin fecha'}</td>
-                    <td style="padding:12px; font-weight:bold;">${rep.tipo || 'General'}</td>
-                    <td style="padding:12px;">${rep.sector || 'No especificado'}</td>
-                    <td style="padding:12px;">${rep.descripcion || ''}</td>
-                    <td style="padding:12px; text-align:center;">${imagenHTML}</td>
-                    <td style="padding:12px; text-align:center;">${badgeEstado}</td>
-                </tr>
-            `;
-        });
-
-        res.send(`
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Portal de Reportes Ciudadanos</title>
-            <body style="font-family:Arial, sans-serif; background:#f4f6f7; padding:20px; color:#2c3e50;">
-                <div style="max-width:1100px; margin:0 auto; background:white; padding:30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
-                    <h1 style="color:#2c3e50; border-bottom:3px solid #3498db; padding-bottom:10px; margin-top:0;">📋 Reportes Comunitarios</h1>
-                    <p style="color:#7f8c8d;">Consulta aquí si tu requerimiento ya fue acogido o solucionado por el equipo municipal.</p>
-                    <a href="/" style="display:inline-block; background:#3498db; color:white; padding:10px 15px; text-decoration:none; border-radius:4px; font-weight:bold; margin-bottom:20px;">← Subir un Nuevo Reporte</a>
-                    
-                    <div style="overflow-x:auto;">
-                        <table style="width:100%; border-collapse:collapse; min-width:700px;">
-                            <thead>
-                                <tr style="background:#2c3e50; color:white; text-align:left;">
-                                    <th style="padding:12px;">Fecha/Hora</th>
-                                    <th style="padding:12px;">Tipo</th>
-                                    <th style="padding:12px;">Ubicación</th>
-                                    <th style="padding:12px;">Descripción</th>
-                                    <th style="padding:12px; text-align:center;">Evidencia</th>
-                                    <th style="padding:12px; text-align:center;">Estado actual</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${filasTabla || '<tr><td colspan="6" style="padding:20px; text-align:center; color:#95a5a6;">Aún no hay reportes registrados.</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </body>
-        `);
-    } catch (err) {
-        res.status(500).send("Error al cargar los reportes.");
-    }
+const path = require('path');
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ==========================================
