@@ -268,7 +268,22 @@ app.post('/actualizar-estado', async (req, res) => {
         res.json({ success: false, error: err.message });
     }
 });
+// Ruta para que el Panel Municipal pueda LEER todos los reportes de Supabase
+app.get('/reportes', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('reportes') // Asegúrate de que tu tabla en Supabase se llame exactamente así
+            .select('*')
+            .order('fecha', { ascending: false }); // Ordena para que los más nuevos salgan primero
 
+        if (error) throw error;
+        
+        res.json(data);
+    } catch (err) {
+        console.error("Error al obtener reportes:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor iniciado en el puerto: ${PORT}`);
 });
