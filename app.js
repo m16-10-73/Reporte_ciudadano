@@ -284,6 +284,24 @@ app.get('/reportes', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// Ruta para actualizar el Estado en Supabase
+app.patch('/reportes/:id', async (req, res) => {
+  const { id } = req.params;
+  const { Estado } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from('informes')
+      .update({ Estado: Estado })
+      .eq('id', id); // Busca por el ID del reporte
+
+    if (error) throw error;
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor iniciado en el puerto: ${PORT}`);
 });
