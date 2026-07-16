@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Gestión Municipal Coquimbo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS (Para el Mapa) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 450px; width: 100%; border-radius: 12px; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans flex flex-col">
+
+    <!-- Barra de Navegación Superior -->
+    <header class="bg-slate-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-city text-amber-500 text-2xl"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide">Municipalidad de Coquimbo</h1>
+                <p class="text-xs text-slate-400">Sistema de Gestión de Reportes Vecinales</p>
+            </div>
+        </div>
+        <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-sm">
+            <span class="text-amber-500 font-bold">●</span> Rol: Funcionario Municipal
+        </div>
+    </header>
+
+    <!-- Contenedor Principal (Layout de 2 Columnas) -->
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
+        
+        <!-- COLUMNA IZQUIERDA: Tabla de Reportes (8 de 12 columnas) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
+                <div class="p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800 text-lg">
+                        <i class="fa-solid fa-list-check mr-2 text-slate-500"></i> Bandeja de Reportes
+                    </h2>
+                    <button onclick="cargarReportes()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1">
+                        <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+                    </button>
+                </div>
+
+                <!-- Contenedor con Scroll para la Tabla -->
+                <div class="overflow-x-auto flex-1 max-h-[600px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+                                <th class="py-3 px-4">Fecha</th>
+                                <th class="py-3 px-4">Tipo / Sector</th>
+                                <th class="py-3 px-4">Estado</th>
+                                <th class="py-3 px-4 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaReportes" class="text-sm text-slate-700 divide-y divide-slate-100">
+                            <!-- Los reportes se cargarán dinámicamente aquí -->
+                            <tr>
+                                <td colspan="4" class="text-center py-10 text-slate-400">Cargando reportes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUMNA DERECHA: Detalle del Reporte Seleccionado & Mapa (5 de 12 columnas) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Mapa Interactivo -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-3 text-sm">
+                    <i class="fa-solid fa-map-location-dot mr-2 text-amber-500"></i> Ubicación del Incidente
+                </h3>
+                <div id="map"></div>
+            </div>
+
+            <!-- Ficha de Detalle Seleccionado -->
+            <div id="fichaDetalle" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1 hidden">
+                <div class="flex justify-between items-start border-b border-slate-100 pb-4 mb-4">
+                    <div>
+                        <span id="detTipo" class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Tipo</span>
+                        <h3 class="font-bold text-slate-800 text-lg mt-2" id="detSector">Sector</h3>
+                    </div>
+                    <!-- Control para cambiar el Estado -->
+                    <div class="text-right">
+                        <label class="block text-xs text-slate-400 font-semibold mb-1">CAMBIAR ESTADO</label>
+                        <select id="selectEstado" onchange="actualizarEstadoServidor()" class="bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold px-2.5 py-1.5 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En Proceso">En Proceso</option>
+                            <option value="Resuelto">Resuelto</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Descripción -->
+                    <div>
+                        <h4 class="text-xs text-slate-400 font-bold uppercase mb-1">Descripción del Vecino</h4>
+                        <p class="text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm" id="detDescripcion">Detalle...</p>
+                    </div>
+
+                    <!-- Datos del Vecino -->
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs">
+                        <div>
+                            <span class="text-slate-400 font-bold block uppercase">Reporta</span>
+                            <span class="text-slate-700 font-semibold" id="detVecino">Nombre</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block uppercase">Contacto</span>
+                            <a href="#" class="text-amber-600 hover:underline font-semibold" id="detTelefono">Teléfono</a>
+                        </div>
+                    </div>
+
+                    <!-- Foto Adjunta -->
+                    <div>
+                        <h4 class="text-xs text-slate-400 font-bold uppercase mb-2">Evidencia Fotográfica</h4>
+                        <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 h-44 flex items-center justify-center">
+                            <img id="detFoto" src="" alt="Evidencia" class="w-full h-full object-cover hidden">
+                            <div id="detSinFoto" class="text-slate-400 text-xs text-center">
+                                <i class="fa-solid fa-image-slash text-3xl mb-1 block"></i> Sin foto adjunta
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ficha vacía por defecto -->
+            <div id="fichaVacia" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex-1 flex flex-col items-center justify-center text-center text-slate-400">
+                <i class="fa-solid fa-mouse-pointer text-4xl mb-3 text-slate-300"></i>
+                <p class="text-sm font-semibold">Selecciona un reporte de la lista para ver su ubicación, foto y gestionar su estado.</p>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Leaflet JS (Para el Mapa) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Configuración de la API: APUNTA EXACTAMENTE A TU BACKEND DE RENDER
+        const API_URL = 'https://reporte-ciudadano-q7yn.onrender.com';
+
+        let mapa;
+        let marcadorActual;
+        let reportesCargados = [];
+        let reporteSeleccionado = null;
+
+        // 1. Inicializar el Mapa centrado por defecto en Coquimbo
+        function inicializarMapa() {
+            mapa = L.map('map').setView([-29.953, -71.339], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapa);
+        }
+
+        // 2. Cargar reportes desde el servidor
+        async function cargarReportes() {
+            const tbody = document.getElementById('tablaReportes');
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Cargando reportes...</td></tr>`;
+
+            try {
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error('Error al obtener datos');
+                
+                reportesCargados = await res.json();
+                renderizarTabla(reportesCargados);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-red-500 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No se pudo cargar la información: ${err.message}</td></tr>`;
+            }
+        }
+
+        // 3. Renderizar filas de la tabla de forma limpia
+        function renderizarTabla(datos) {
+            const tbody = document.getElementById('tablaReportes');
+            tbody.innerHTML = '';
+
+            if (datos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400">No hay reportes ingresados.</td></tr>`;
+                return;
+            }
+
+            datos.forEach((rep) => {
+                // Configurar color según la columna Estado (con E mayúscula)
+                let badgeColor = "bg-red-100 text-red-800";
+                if (rep.Estado === "En Proceso") badgeColor = "bg-blue-100 text-blue-800";
+                if (rep.Estado === "Resuelto") badgeColor = "bg-green-100 text-green-800";
+
+                const fechaFormateada = rep.fecha ? new Date(rep.fecha).toLocaleDateString('es-CL') : 'S/F';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 cursor-pointer transition border-b border-slate-100";
+                tr.onclick = () => verDetalle(rep);
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-slate-500 text-xs">${fechaFormateada}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-800">${rep.tipo || 'Sin tipo'}</div>
+                        <div class="text-xs text-slate-400 max-w-xs truncate">${rep.sector || 'Sin sector'}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeColor}">${rep.Estado || 'Pendiente'}</span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button class="text-amber-500 hover:text-amber-600 font-bold text-xs flex items-center gap-1 mx-auto">
+                            Ver <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 4. Mostrar el detalle del reporte seleccionado en la ficha de la derecha
+        function verDetalle(rep) {
+            reporteSeleccionado = rep;
+
+            document.getElementById('fichaVacia').classList.add('hidden');
+            document.getElementById('fichaDetalle').classList.remove('hidden');
+
+            // Cargar datos en los elementos usando tus columnas exactas
+            document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo';
+            document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
+            document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción detallada.';
+            document.getElementById('detVecino').innerText = rep.Nombre_de_quien_reporta || 'Anónimo';
+            
+            // Estado dropdown
+            document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
+
+            // Teléfono
+            const telEl = document.getElementById('detTelefono');
+            if (rep.Teléfono) {
+                telEl.innerText = rep.Teléfono;
+                telEl.href = `tel:${rep.Teléfono}`;
+                telEl.classList.remove('pointer-events-none', 'text-slate-400');
+            } else {
+                telEl.innerText = 'No registra';
+                telEl.href = '#';
+                telEl.classList.add('pointer-events-none', 'text-slate-400');
+            }
+
+            // Imagen
+            const imgEl = document.getElementById('detFoto');
+            const noImgEl = document.getElementById('detSinFoto');
+            if (rep.foto_url && rep.foto_url !== 'sin-foto') {
+                imgEl.src = rep.foto_url;
+                imgEl.classList.remove('hidden');
+                noImgEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                noImgEl.classList.remove('hidden');
+            }
+
+            // 5. Manejar Ubicación en el Mapa (usando latitud y longitud)
+            if (rep.latitud && rep.longitud) {
+                const lat = parseFloat(rep.latitud);
+                const lon = parseFloat(rep.longitud);
+
+                // Quitar marcador anterior si existe
+                if (marcadorActual) mapa.removeLayer(marcadorActual);
+
+                // Mover mapa y crear nuevo marcador
+                mapa.setView([lat, lon], 15);
+                marcadorActual = L.marker([lat, lon]).addTo(mapa)
+                    .bindPopup(`<b>${rep.tipo}</b><br>${rep.sector}`)
+                    .openPopup();
+            } else {
+                // Si no hay coordenadas (ej: falló el GPS en el envío), no ponemos marcador.
+                if (marcadorActual) mapa.removeLayer(marcadorActual);
+                addLogPopup('Este reporte no tiene coordenadas GPS integradas.');
+            }
+        }
+
+        // 6. Actualizar el Estado en el Servidor de Render (y por ende, en Supabase)
+        async function actualizarEstadoServidor() {
+            if (!reporteSeleccionado) return;
+
+            const nuevoEstado = document.getElementById('selectEstado').value;
+            
+            try {
+                // Hacemos un PUT o PATCH a tu backend en Render enviando el id del reporte y el nuevo estado
+                const res = await fetch(`${API_URL}/${reporteSeleccionado.id}`, {
+                    method: 'PATCH', // O 'PUT' dependiendo de cómo esté tu ruta en el backend
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Estado: nuevoEstado }) // Enviando la variable con "E" mayúscula tal como requiere tu columna
+                });
+
+                if (!res.ok) throw new Error('Error de conexión con el servidor');
+
+                alert(`Estado actualizado con éxito a: ${nuevoEstado}`);
+                
+                // Actualizar localmente la fila para no recargar todo
+                reporteSeleccionado.Estado = nuevoEstado;
+                cargarReportes(); // Recargamos para actualizar visualmente la tabla
+            } catch (err) {
+                alert(`No se pudo actualizar el estado: ${err.message}`);
+            }
+        }
+
+        // Inicializar el sistema al cargar la página
+        window.onload = () => {
+            inicializarMapa();
+            cargarReportes();
+        };
+    </script>
+</body>
+</html>
