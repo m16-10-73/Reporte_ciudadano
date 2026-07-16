@@ -287,7 +287,7 @@ document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
                 const res = await fetch(`${API_URL}/${reporteSeleccionado.id}`, {
                     method: 'PATCH', // O 'PUT' dependiendo de cómo esté tu ruta en el backend
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Estado: nuevoEstado }) // Enviando la variable con "E" mayúscula tal como requiere tu columna
+                    body: JSON.stringify({ Estado: `'${nuevoEstado}'` }) // Enviando la variable con "E" mayúscula tal como requiere tu columna
                 });
 
                 if (!res.ok) throw new Error('Error de conexión con el servidor');

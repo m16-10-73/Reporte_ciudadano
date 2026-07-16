@@ -273,7 +273,8 @@ app.get('/reportes', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('informes') // <--- ¡Aquí cambiamos 'reportes' por 'informes'!
-            .select('*');
+            .select('*')
+            .order('created_at', { ascending: false }); // <-- ESTA LÍNEA ORDENA DE NUEVO A ANTIGUO
 
         if (error) throw error;
         
