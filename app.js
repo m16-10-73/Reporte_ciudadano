@@ -272,9 +272,8 @@ app.post('/actualizar-estado', async (req, res) => {
 app.get('/reportes', async (req, res) => {
     try {
         const { data, error } = await supabase
-            .from('reportes') // Asegúrate de que tu tabla en Supabase se llame exactamente así
-            .select('*')
-            .order('fecha', { ascending: false }); // Ordena para que los más nuevos salgan primero
+            .from('informes') // <--- ¡Aquí cambiamos 'reportes' por 'informes'!
+            .select('*');
 
         if (error) throw error;
         
