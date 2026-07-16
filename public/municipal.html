@@ -51,7 +51,7 @@
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
                                 <th class="py-3 px-4">Fecha</th>
-                                <th class="py-3 px-4">Tipo / Sector</th>
+                                <th class="py-3 px-4">Tipo  / Sector</th>
                                 <th class="py-3 px-4">Estado</th>
                                 <th class="py-3 px-4 text-center">Acción</th>
                             </tr>
@@ -189,7 +189,9 @@
                 if (rep.Estado === "En Proceso") badgeColor = "bg-blue-100 text-blue-800";
                 if (rep.Estado === "Resuelto") badgeColor = "bg-green-100 text-green-800";
 
-                const fechaFormateada = rep.fecha ? new Date(rep.fecha).toLocaleDateString('es-CL') : 'S/F';
+                // Si la fecha ya viene formateada como texto desde tu base de datos, la usamos directo.
+// Si por alguna razón falla, la mostramos tal cual viene sin romper la tabla.
+const fechaFormateada = rep.fecha ? rep.fecha.split(',')[0] : 'Sin fecha';
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 cursor-pointer transition border-b border-slate-100";
@@ -221,14 +223,14 @@
             document.getElementById('fichaVacia').classList.add('hidden');
             document.getElementById('fichaDetalle').classList.remove('hidden');
 
-            // Cargar datos en los elementos usando tus columnas exactas
-            document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo';
-            document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
-            document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción detallada.';
-            document.getElementById('detVecino').innerText = rep.Nombre_de_quien_reporta || 'Anónimo';
-            
-            // Estado dropdown
-            document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
+            // Usamos exactamente las minúsculas y nombres de tu Supabase real:
+document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo'; 
+document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
+document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
+document.getElementById('detVecino').innerText = rep.email || 'Anónimo'; // Usamos 'email' que es la columna que tienes en Supabase
+
+// Para el select del Estado
+document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
 
             // Teléfono
             const telEl = document.getElementById('detTelefono');
