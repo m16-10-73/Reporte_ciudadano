@@ -128,10 +128,12 @@
                 <strong style="color: #1e293b; display: block;">¿Te encuentras en el lugar del problema?</strong>
                 <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">Apágalo si estás reportando desde tu casa para no alterar el mapa de Coquimbo.</span>
             </div>
-            <input type="checkbox" id="chkUsarGPS" checked onchange="alternarUbicacionGPS()" style="width: 18px; height: 18px; cursor: pointer; accent-color: #e67e22;">
+            <input type="checkbox" id="chkUsarGPS" onchange="alternarUbicacionGPS()" style="width: 18px; height: 18px; cursor: pointer; accent-color: #e67e22;">
         </div>
         <!-- Geo-Localización Automática (Invisible pero se procesa) -->
-        <div class="gps-box" id="gpsStatus">
+        <div class="gps-box" id="gpsStatus" style="display: none;">
+            
+        </div>>
             📍 Detectando coordenadas geográficas...
         </div>
         <input type="hidden" id="latitud" name="latitud">
