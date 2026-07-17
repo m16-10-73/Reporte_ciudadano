@@ -150,14 +150,22 @@
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                document.getElementById('latitud').value = lat;
-                document.getElementById('longitud').value = lon;
-                document.getElementById('sectorGPS').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                document.getElementById('gpsStatus').innerHTML = `📍 ¡Ubicación Satelital Confirmada! (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            // Guardamos las coordenadas reales en variables globales fuera de la función
+            window.latitudGuardada = position.coords.latitude;
+            window.longitudGuardada = position.coords.longitude;
+            
+            // Ejecutamos la lógica que decide si se inyectan o se borran los datos
+            if (typeof alternarUbicacionGPS === "function") {
+                alternarUbicacionGPS();
+            } else {
+                // Respaldo por si aún no pegas la función de abajo
+                document.getElementById('latitud').value = window.latitudGuardada;
+                document.getElementById('longitud').value = window.longitudGuardada;
+                document.getElementById('sectorGPS').value = `${window.latitudGuardada.toFixed(6)}, ${window.longitudGuardada.toFixed(6)}`;
+                document.getElementById('gpsStatus').innerHTML = `📍 ¡Ubicación Satelital Confirmada!`;
                 document.getElementById('gpsStatus').style.background = '#e8f8f5';
                 document.getElementById('gpsStatus').style.borderLeft = '4px solid #2ecc71';
+            }
             },
             (error) => {
                 document.getElementById('gpsStatus').innerHTML = `⚠️ No se pudo obtener el GPS exacto. Usaremos la dirección escrita.`;
@@ -168,6 +176,40 @@
     } else {
         document.getElementById('gpsStatus').innerHTML = `⚠️ Tu navegador no soporta geolocalización.`;
     }
+    // Esta función lee el estado del checkbox y limpia o rellena el formulario
+function alternarUbicacionGPS() {
+    const quiereGPS = document.getElementById('chkUsarGPS').checked;
+    const cajaGpsStatus = document.getElementById('gpsStatus');
+    
+    // Recuperamos los datos guardados en el paso anterior
+    const lat = window.latitudGuardada;
+    const lon = window.longitudGuardada;
+
+    if (quiereGPS && lat && lon) {
+        // SI EL VECINO QUIERE GPS: Asignamos todo con normalidad
+        document.getElementById('latitud').value = lat;
+        document.getElementById('longitud').value = lon;
+        document.getElementById('sectorGPS').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+        
+        if (cajaGpsStatus) {
+            cajaGpsStatus.innerHTML = `📍 ¡Ubicación Satelital Confirmada!`;
+            cajaGpsStatus.style.display = 'block';
+            cajaGpsStatus.style.background = '#e8f8f5';
+            cajaGpsStatus.style.borderLeft = '4px solid #2ecc71';
+        }
+    } else {
+        // SI EL VECINO LO APAGA: Vaciamos absolutamente todos los campos de geolocalización
+        document.getElementById('latitud').value = '';
+        document.getElementById('longitud').value = '';
+        document.getElementById('sectorGPS').value = '';
+        
+        if (cajaGpsStatus) {
+            // Escondemos la caja verde para que visualmente se note que se desactivó el rastreo
+            cajaGpsStatus.style.display = 'none'; 
+        }
+        console.log("Coordenadas anuladas. El servidor procesará el reporte usando solo la dirección de texto.");
+    }
+}
 </script>
 </body>
 </html>
