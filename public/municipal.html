@@ -76,6 +76,11 @@
                     <i class="fa-solid fa-map-location-dot mr-2 text-amber-500"></i> Ubicación del Incidente
                 </h3>
                 <div id="map"></div>
+                <!-- Caja para cuando el vecino no dé GPS -->
+<div id="mapaError" class="hidden flex flex-col items-center justify-center bg-slate-200 text-slate-700 text-center font-medium rounded-xl p-6" style="height: 450px;">
+    <p class="text-lg font-bold text-amber-700">⚠️ Vecino no dio ubicación GPS</p>
+    <p class="text-sm mt-2 text-slate-600">Ver dirección manual en los detalles de la ficha.</p>
+</div>
             </div>
 
             <!-- Ficha de Detalle Seleccionado -->
@@ -257,7 +262,14 @@ document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
             }
 
             // 5. Manejar Ubicación en el Mapa (usando latitud y longitud)
+            const mapEl = document.getElementById('map');
+            const mapErrorEl = document.getElementById('mapaError');
+
             if (rep.latitud && rep.longitud) {
+                // SI HAY GPS: Mostrar mapa y ocultar mensaje de error
+                mapEl.classList.remove('hidden');
+                if (mapErrorEl) mapErrorEl.classList.add('hidden');
+
                 const lat = parseFloat(rep.latitud);
                 const lon = parseFloat(rep.longitud);
 
@@ -270,11 +282,17 @@ document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
                     .bindPopup(`<b>${rep.tipo}</b><br>${rep.sector}`)
                     .openPopup();
             } else {
-                // Si no hay coordenadas (ej: falló el GPS en el envío), no ponemos marcador.
+                // SI NO HAY GPS: Ocultar mapa y mostrar mensaje de error
+                mapEl.classList.add('hidden');
+                if (mapErrorEl) mapErrorEl.classList.remove('hidden');
+
+                // Quitar marcador anterior si existe
                 if (marcadorActual) mapa.removeLayer(marcadorActual);
-                addLogPopup('Este reporte no tiene coordenadas GPS integradas.');
             }
-        }
+
+            // Pintar el botón selector según el estado del reporte
+            actualizarColorSelect(rep.Estado || 'Pendiente');
+            } // <- Esta llave cierra el "if (rep.latitud && rep.longitud)" que pusimos arriba
 
         // 6. Actualizar el Estado en el Servidor de Render (y por ende, en Supabase)
         async function actualizarEstadoServidor() {
@@ -302,7 +320,22 @@ const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/reportes/${
                 alert(`No se pudo actualizar el estado: ${err.message}`);
             }
         }
-
+function actualizarColorSelect(estado) {
+    const select = document.getElementById('selectEstado');
+    if (!select) return;
+    
+    // Limpiamos los colores viejos para que no se mezclen
+    select.classList.remove('bg-slate-50', 'bg-amber-100', 'text-amber-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+    
+    // Aplicamos los colores según el estado
+    if (estado === 'En Proceso') {
+        select.classList.add('bg-amber-100', 'text-amber-800'); // Amarillo Pálido
+    } else if (estado === 'Resuelto') {
+        select.classList.add('bg-green-100', 'text-green-800'); // Verde Pálido
+    } else {
+        select.classList.add('bg-red-100', 'text-red-800'); // Pendiente (Rojo Pálido)
+    }
+}
         // Inicializar el sistema al cargar la página
         window.onload = () => {
             inicializarMapa();
