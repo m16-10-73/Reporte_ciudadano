@@ -308,6 +308,7 @@ const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/reportes/${
             inicializarMapa();
             cargarReportes();
         };
+        setInterval(cargarReportes, 30000);
     </script>
 </body>
 </html>
