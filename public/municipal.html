@@ -93,7 +93,7 @@
                     <!-- Control para cambiar el Estado -->
                     <div class="text-right">
                         <label class="block text-xs text-slate-400 font-semibold mb-1">CAMBIAR ESTADO</label>
-                        <select id="selectEstado" onchange="actualizarEstadoServidor()" class="bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold px-2.5 py-1.5 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                        <select id="selectEstado" onchange="actualizarEstadoServidor(); actualizarColorSelect(this.value)" class="bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold px-2.5 py-1.5 focus:ring-amber-500 focus:border-amber-500 outline-none">
                             <option value="Pendiente">Pendiente</option>
                             <option value="En Proceso">En Proceso</option>
                             <option value="Resuelto">Resuelto</option>
