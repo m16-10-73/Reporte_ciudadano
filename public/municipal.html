@@ -77,10 +77,10 @@
                 </h3>
                 <div id="map"></div>
                 <!-- Caja para cuando el vecino no dé GPS -->
-<div id="mapaError" class="hidden flex flex-col items-center justify-center bg-slate-200 text-slate-700 text-center font-medium rounded-xl p-6" style="height: 450px;">
-    <p class="text-lg font-bold text-amber-700">⚠️ Vecino no dio ubicación GPS</p>
-    <p class="text-sm mt-2 text-slate-600">Ver dirección manual en los detalles de la ficha.</p>
-</div>
+                <div id="mapaError" class="hidden flex flex-col items-center justify-center bg-slate-200 text-slate-700 text-center font-medium rounded-xl p-6" style="height: 450px;">
+                    <p class="text-lg font-bold text-amber-700">⚠️ Vecino no dio ubicación GPS</p>
+                    <p class="text-sm mt-2 text-slate-600">Ver dirección manual en los detalles de la ficha.</p>
+                </div>
             </div>
 
             <!-- Ficha de Detalle Seleccionado -->
@@ -189,14 +189,15 @@
             }
 
             datos.forEach((rep) => {
-                // Configurar color según la columna Estado (con E mayúscula)
-                let badgeColor = "bg-red-100 text-red-800";
-                if (rep.Estado === "En Proceso") badgeColor = "bg-blue-100 text-blue-800";
-                if (rep.Estado === "Resuelto") badgeColor = "bg-green-100 text-green-800";
+                // Limpiamos comillas simples del texto que viene de la base de datos para comparar bien
+                const estadoLimpio = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
 
-                // Si la fecha ya viene formateada como texto desde tu base de datos, la usamos directo.
-// Si por alguna razón falla, la mostramos tal cual viene sin romper la tabla.
-const fechaFormateada = rep.fecha ? rep.fecha.split(',')[0] : 'Sin fecha';
+                // Configurar color unificado para las filas de la tabla
+                let badgeColor = "bg-red-100 text-red-800"; // Pendiente (Rojo)
+                if (estadoLimpio === "En Proceso") badgeColor = "bg-amber-100 text-amber-800"; // En Proceso (Amarillo)
+                if (estadoLimpio === "Resuelto") badgeColor = "bg-green-100 text-green-800"; // Resuelto (Verde)
+
+                const fechaFormateada = rep.fecha ? rep.fecha.split(',')[0] : 'Sin fecha';
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 cursor-pointer transition border-b border-slate-100";
@@ -209,7 +210,7 @@ const fechaFormateada = rep.fecha ? rep.fecha.split(',')[0] : 'Sin fecha';
                         <div class="text-xs text-slate-400 max-w-xs truncate">${rep.sector || 'Sin sector'}</div>
                     </td>
                     <td class="py-3 px-4">
-                        <span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeColor}">${rep.Estado || 'Pendiente'}</span>
+                        <span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeColor}">${estadoLimpio}</span>
                     </td>
                     <td class="py-3 px-4 text-center">
                         <button class="text-amber-500 hover:text-amber-600 font-bold text-xs flex items-center gap-1 mx-auto">
@@ -228,14 +229,14 @@ const fechaFormateada = rep.fecha ? rep.fecha.split(',')[0] : 'Sin fecha';
             document.getElementById('fichaVacia').classList.add('hidden');
             document.getElementById('fichaDetalle').classList.remove('hidden');
 
-            // Usamos exactamente las minúsculas y nombres de tu Supabase real:
-document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo'; 
-document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
-document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
-document.getElementById('detVecino').innerText = rep.email || 'Anónimo'; // Usamos 'email' que es la columna que tienes en Supabase
+            document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo'; 
+            document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
+            document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
+            document.getElementById('detVecino').innerText = rep.email || 'Anónimo'; 
 
-// Para el select del Estado
-document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
+            // Limpiamos comillas del estado para asignarlo correctamente al selector visual
+            const estadoFicha = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
+            document.getElementById('selectEstado').value = estadoFicha;
 
             // Teléfono
             const telEl = document.getElementById('detTelefono');
@@ -266,33 +267,28 @@ document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
             const mapErrorEl = document.getElementById('mapaError');
 
             if (rep.latitud && rep.longitud) {
-                // SI HAY GPS: Mostrar mapa y ocultar mensaje de error
                 mapEl.classList.remove('hidden');
                 if (mapErrorEl) mapErrorEl.classList.add('hidden');
 
                 const lat = parseFloat(rep.latitud);
                 const lon = parseFloat(rep.longitud);
 
-                // Quitar marcador anterior si existe
                 if (marcadorActual) mapa.removeLayer(marcadorActual);
 
-                // Mover mapa y crear nuevo marcador
                 mapa.setView([lat, lon], 15);
                 marcadorActual = L.marker([lat, lon]).addTo(mapa)
                     .bindPopup(`<b>${rep.tipo}</b><br>${rep.sector}`)
                     .openPopup();
             } else {
-                // SI NO HAY GPS: Ocultar mapa y mostrar mensaje de error
                 mapEl.classList.add('hidden');
                 if (mapErrorEl) mapErrorEl.classList.remove('hidden');
 
-                // Quitar marcador anterior si existe
                 if (marcadorActual) mapa.removeLayer(marcadorActual);
             }
 
-            // Pintar el botón selector según el estado del reporte
-            actualizarColorSelect(rep.Estado || 'Pendiente');
-            } // <- Esta llave cierra el "if (rep.latitud && rep.longitud)" que pusimos arriba
+            // Pintar el botón selector de forma limpia
+            actualizarColorSelect(estadoFicha);
+        } 
 
         // 6. Actualizar el Estado en el Servidor de Render (y por ende, en Supabase)
         async function actualizarEstadoServidor() {
@@ -301,41 +297,42 @@ document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
             const nuevoEstado = document.getElementById('selectEstado').value;
             
             try {
-                // Hacemos un PUT o PATCH a tu backend en Render enviando el id del reporte y el nuevo estado
-                // Reemplázala por esta versión:
-const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/reportes/${reporteSeleccionado.id}`, {
-                    method: 'PATCH', // O 'PUT' dependiendo de cómo esté tu ruta en el backend
+                const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/reportes/${reporteSeleccionado.id}`, {
+                    method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Estado: `'${nuevoEstado}'` }) // Enviando la variable con "E" mayúscula tal como requiere tu columna
+                    body: JSON.stringify({ Estado: `'${nuevoEstado}'` }) 
                 });
 
                 if (!res.ok) throw new Error('Error de conexión con el servidor');
 
                 alert(`Estado actualizado con éxito a: ${nuevoEstado}`);
                 
-                // Actualizar localmente la fila para no recargar todo
                 reporteSeleccionado.Estado = nuevoEstado;
-                cargarReportes(); // Recargamos para actualizar visualmente la tabla
+                cargarReportes(); 
             } catch (err) {
                 alert(`No se pudo actualizar el estado: ${err.message}`);
             }
         }
-function actualizarColorSelect(estado) {
-    const select = document.getElementById('selectEstado');
-    if (!select) return;
-    
-    // Limpiamos los colores viejos para que no se mezclen
-    select.classList.remove('bg-slate-50', 'bg-amber-100', 'text-amber-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-    
-    // Aplicamos los colores según el estado
-    if (estado === 'En Proceso') {
-        select.classList.add('bg-amber-100', 'text-amber-800'); // Amarillo Pálido
-    } else if (estado === 'Resuelto') {
-        select.classList.add('bg-green-100', 'text-green-800'); // Verde Pálido
-    } else {
-        select.classList.add('bg-red-100', 'text-red-800'); // Pendiente (Rojo Pálido)
-    }
-}
+
+        function actualizarColorSelect(estado) {
+            const select = document.getElementById('selectEstado');
+            if (!select) return;
+            
+            const estadoLimpio = estado ? estado.replace(/'/g, "").trim() : 'Pendiente';
+            
+            // Limpiamos los colores viejos para que no se mezclen
+            select.classList.remove('bg-slate-50', 'bg-amber-100', 'text-amber-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            
+            // Aplicamos los colores según el estado limpio
+            if (estadoLimpio === 'En Proceso') {
+                select.classList.add('bg-amber-100', 'text-amber-800'); 
+            } else if (estadoLimpio === 'Resuelto') {
+                select.classList.add('bg-green-100', 'text-green-800'); 
+            } else {
+                select.classList.add('bg-red-100', 'text-red-800'); 
+            }
+        }
+
         // Inicializar el sistema al cargar la página
         window.onload = () => {
             inicializarMapa();
