@@ -285,7 +285,7 @@ document.getElementById('selectEstado').value = rep.Estado || 'Pendiente';
             try {
                 // Hacemos un PUT o PATCH a tu backend en Render enviando el id del reporte y el nuevo estado
                 // Reemplázala por esta versión:
-const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/api/reportes/${reporteSeleccionado.id}`, {
+const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/reportes/${reporteSeleccionado.id}`, {
                     method: 'PATCH', // O 'PUT' dependiendo de cómo esté tu ruta en el backend
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ Estado: `'${nuevoEstado}'` }) // Enviando la variable con "E" mayúscula tal como requiere tu columna
