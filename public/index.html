@@ -122,7 +122,14 @@
             <label for="sector">Dirección o Punto de Referencia</label>
             <input type="text" id="sector" name="sector" placeholder="Ej: Aldunate con Borgoño" required>
         </div>
-
+<!-- Selector para activar o desactivar el envío de coordenadas -->
+        <div class="form-group" style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 13px; color: #334155; text-align: left; max-width: 80%;">
+                <strong style="color: #1e293b; display: block;">¿Te encuentras en el lugar del problema?</strong>
+                <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">Apágalo si estás reportando desde tu casa para no alterar el mapa de Coquimbo.</span>
+            </div>
+            <input type="checkbox" id="chkUsarGPS" checked onchange="alternarUbicacionGPS()" style="width: 18px; height: 18px; cursor: pointer; accent-color: #e67e22;">
+        </div>
         <!-- Geo-Localización Automática (Invisible pero se procesa) -->
         <div class="gps-box" id="gpsStatus">
             📍 Detectando coordenadas geográficas...
