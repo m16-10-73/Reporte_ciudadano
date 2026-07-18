@@ -338,7 +338,7 @@
             }
         }
 // 5. NUEVA FUNCIÓN EXCEL (Pegada en el espacio que abriste)
-        function exportarExcel() {
+        window.exportarExcel = function() {
             const datosAExportar = typeof reportes !== 'undefined' ? reportes : (typeof datos !== 'undefined' ? datos : []);
             if (datosAExportar.length === 0) {
                 alert("Falta enlazar la variable de datos en el código.");
