@@ -337,6 +337,35 @@
                 select.classList.add('bg-red-100', 'text-red-800'); 
             }
         }
+// 5. NUEVA FUNCIÓN EXCEL (Pegada en el espacio que abriste)
+        function exportarExcel() {
+            const datosAExportar = typeof reportes !== 'undefined' ? reportes : (typeof datos !== 'undefined' ? datos : []);
+            if (datosAExportar.length === 0) {
+                alert("Falta enlazar la variable de datos en el código.");
+                return;
+            }
+            let csvContent = "\uFEFF";
+            csvContent += "Fecha y Hora;Tipo de Incidencia;Dirección/Sector;Descripción;Contacto Vecino;Teléfono;Estado\n";
+            datosAExportar.forEach(rep => {
+                const fecha = rep.fecha || 'Sin fecha';
+                const tipo = (rep.tipo || '').replace(/;/g, ',');
+                const sector = (rep.sector || '').replace(/;/g, ',');
+                const desc = (rep.descripcion || '').replace(/;/g, ',').replace(/\n/g, ' ');
+                const vecino = (rep.email || 'Anónimo').replace(/;/g, ',');
+                const fono = rep.Teléfono || 'No registra';
+                const est = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
+                csvContent += `${fecha};${tipo};${sector};${desc};${vecino};${fono};${est}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Reportes_Municipales_Coquimbo.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         // Inicializar el sistema al cargar la página
         window.onload = () => {
