@@ -344,6 +344,49 @@
                 alert("Falta enlazar la variable de datos en el código.");
                 return;
             }
+            // Variable para saber si la tabla está filtrada o no
+let filtradoActivo = false;
+
+window.verMisReportes = function() {
+    // 1. Si ya está filtrado, el botón sirve para restaurar la lista completa
+    if (filtradoActivo) {
+        renderizarTabla(reportesCargados);
+        filtradoActivo = false;
+        
+        // Opcional: Volver a cambiar el texto del botón si quieres
+        const btn = document.getElementById('btnMisReportes');
+        if (btn) btn.innerText = 'Ver mis reportes';
+        return;
+    }
+
+    // 2. Pedir el correo al vecino
+    const correoVecino = prompt("Por favor, ingresa tu correo electrónico para buscar tus reportes:");
+    
+    // Si cancela o lo deja vacío, no hacemos nada
+    if (!correoVecino || correoVecino.trim() === "") return;
+
+    const correoLimpio = correoVecino.trim().toLowerCase();
+
+    // 3. Filtrar los reportes usando la variable global que descubrimos denante
+    const misReportes = reportesCargados.filter(rep => {
+        const emailReporte = (rep.email || '').trim().toLowerCase();
+        return emailReporte === correoLimpio;
+    });
+
+    // 4. Validar si encontró algo
+    if (misReportes.length === 0) {
+        alert("No se encontraron reportes asociados al correo: " + correoVecino);
+        return;
+    }
+
+    // 5. Renderizar la tabla con el filtro y activar la bandera
+    renderizarTabla(misReportes);
+    filtradoActivo = true;
+
+    // Opcional: Cambiar el texto del botón para que el vecino sepa cómo volver atrás
+    const btn = document.getElementById('btnMisReportes');
+    if (btn) btn.innerText = 'Mostrar todos';
+}
             let csvContent = "\uFEFF";
             csvContent += "Fecha y Hora;Tipo de Incidencia;Dirección/Sector;Descripción;Contacto Vecino;Teléfono;Estado\n";
             datosAExportar.forEach(rep => {

@@ -137,7 +137,7 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
 // 👥 2. VISTA PÚBLICA (EL CIUDADANO VE SUS REPORTES)
 // ==========================================
 
-app.get('/', (req, res) => {
+app.get('/ver-reportes', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
