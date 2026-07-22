@@ -98,9 +98,9 @@ app.post('/registrar-incidencia', upload.single('foto'), async (req, res) => {
                     foto_url: urlPublicaFoto || 'sin-foto',
                     fecha: fechaHoraChile,
                     Estado: 'Pendiente', // Tu columna con "E" mayúscula
-                    Nombre_de_quien_reporta: nombre || 'Anónimo', // Tu columna
-                    Teléfono: telefono || null, // Tu columna con tilde
-                    email: email || null // Tu columna
+                    Nombre_de_quien_reporta: nombre, // Tu columna
+                    Teléfono: telefono, // Tu columna con tilde
+                    email: email, // Tu columna
                 }
             ]);
 
