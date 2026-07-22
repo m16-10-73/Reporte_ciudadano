@@ -221,17 +221,21 @@
             });
         }
 
-        function verDetalle(rep) {
+function verDetalle(rep) {
             reporteSeleccionado = rep;
 
             document.getElementById('fichaVacia').classList.add('hidden');
             document.getElementById('fichaDetalle').classList.remove('hidden');
 
-            document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo'; 
+            // El tipo de reporte (Ej: OTRO, Bache, etc.) se queda con su estilo fijo original
+            const tipoEl = document.getElementById('detTipo');
+            tipoEl.innerText = rep.tipo || 'Sin Tipo'; 
+            tipoEl.className = "bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase";
+
             document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
             document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
             
-            // Asignación correcta de campos separados
+            // Datos del vecino separados
             document.getElementById('detVecino').innerText = rep.Nombre_de_quien_reporta || 'Anónimo'; 
             document.getElementById('detEmail').innerText = rep.email || 'No registra'; 
 
@@ -283,7 +287,7 @@
             }
 
             actualizarColorSelect(estadoFicha);
-        } 
+        }
 
         async function actualizarEstadoServidor() {
             if (!reporteSeleccionado) return;
