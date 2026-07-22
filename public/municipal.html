@@ -301,7 +301,20 @@ function verDetalle(rep) {
 
                 const lat = parseFloat(rep.latitud);
 const lon = parseFloat(rep.longitud);
+// Remover marcador anterior si existía
+        if (marcadorActual) {
+            mapa.removeLayer(marcadorActual);
+        }
 
+        // Crear marcador estándar de Leaflet
+        marcadorActual = L.marker([lat, lon]).addTo(mapa)
+            .bindPopup(`<b>${rep.tipo || ''}</b><br>${rep.sector || ''}`)
+            .openPopup();
+
+        setTimeout(() => {
+            mapa.invalidateSize();
+            mapa.setView([lat, lon], 15);
+        }, 100);
 setTimeout(() => {
     mapa.invalidateSize();
     mapa.setView([lat, lon], 15);
