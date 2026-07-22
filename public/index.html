@@ -282,80 +282,77 @@
         document.getElementById('modalMisReportes').classList.add('hidden');
     }
 
-    async function buscarReportesVecino() {
-        const correoInput = document.getElementById('inputCorreoModal').value.trim().toLowerCase();
-        const contenedor = document.getElementById('listaResultadosVecino');
+   async function buscarReportesVecino() {
+    const correoInput = document.getElementById('inputCorreoModal').value.trim().toLowerCase();
+    const contenedor = document.getElementById('listaResultadosVecino');
 
-        if (!correoInput || !correoInput.includes('@')) {
-            alert('Por favor, ingresa un correo electrónico válido.');
+    if (!correoInput || !correoInput.includes('@')) {
+        alert('Por favor, ingresa un correo electrónico válido.');
+        return;
+    }
+
+    contenedor.innerHTML = `<div style="text-align: center; padding: 20px; color: #7f8c8d; font-size: 13px;">Buscando tus reportes...</div>`;
+
+    try {
+        const res = await fetch(API_URL_PORTAL);
+        if (!res.ok) throw new Error('No se pudo conectar con el servidor.');
+
+        const todos = await res.json();
+        
+        const misReportes = todos.filter(rep => {
+            const correoRep = rep.email ? rep.email.toLowerCase().trim() : '';
+            return correoRep === correoInput;
+        });
+
+        if (misReportes.length === 0) {
+            contenedor.innerHTML = `
+                <div style="background: #fef9e7; border: 1px solid #f1c40f; color: #b7950b; padding: 12px; border-radius: 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                    ⚠️ No encontramos reportes asociados a: ${correoInput}
+                </div>`;
             return;
         }
 
-        contenedor.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Buscando tus reportes...</div>`;
+        contenedor.innerHTML = '';
+        misReportes.forEach(rep => {
+            const estadoLimpio = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
 
-        try {
-            const res = await fetch(API_URL_PORTAL);
-            if (!res.ok) throw new Error('No se pudo conectar con el servidor.');
-
-            const todos = await res.json();
-            
-            // Filtramos solo los reportes que coincidan con el correo del vecino
-            const misReportes = todos.filter(rep => {
-                const correoRep = rep.email ? rep.email.toLowerCase().trim() : '';
-                return correoRep === correoInput;
-            });
-
-            if (misReportes.length === 0) {
-                contenedor.innerHTML = `
-                    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-center text-xs font-medium">
-                        ⚠️ No encontramos reportes asociados a: <b>${correoInput}</b>
-                    </div>`;
-                return;
+            // Colores fijos y seguros para los estados
+            let badgeBg = "#fadbd8";
+            let badgeColor = "#78281f";
+            if (estadoLimpio === "En Proceso") {
+                badgeBg = "#fdebd0";
+                badgeColor = "#b9770e";
+            }
+            if (estadoLimpio === "Resuelto") {
+                badgeBg = "#d4efdf";
+                badgeColor = "#145a32";
             }
 
-            // Dibujamos el listado en formato de tarjetas ordenadas
-            contenedor.innerHTML = '';
-            misReportes.forEach(rep => {
-                const estadoLimpio = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
+            const tarjeta = document.createElement('div');
+            tarjeta.setAttribute("style", "background: #ffffff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);");
 
-                let badgeColor = "bg-red-100 text-red-800 border-red-200";
-                let iconoEstado = "fa-clock";
-                if (estadoLimpio === "En Proceso") {
-                    badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
-                    iconoEstado = "fa-spinner";
-                }
-                if (estadoLimpio === "Resuelto") {
-                    badgeColor = "bg-green-100 text-green-800 border-green-200";
-                    iconoEstado = "fa-circle-check";
-                }
+            tarjeta.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="background: #edf2f7; color: #4a5568; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">${rep.tipo || 'Incidencia'}</span>
+                    <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 11px; font-weight: bold; padding: 3px 10px; border-radius: 20px;">${estadoLimpio}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #2d3748; font-weight: bold;">📍 ${rep.sector || 'Sector no especificado'}</h4>
+                    <p style="margin: 0; font-size: 12px; color: #4a5568; line-height: 1.4;">${rep.descripcion || 'Sin descripción'}</p>
+                </div>
+                <div style="font-size: 11px; color: #a0aec0; border-top: 1px solid #edf2f7; padding-top: 8px; display: flex; justify-content: space-between;">
+                    <span>📅 ${rep.fecha || 'Sin fecha'}</span>
+                    <span style="font-weight: bold; color: #718096;">ID: #${rep.id || '---'}</span>
+                </div>
+            `;
+            contenedor.appendChild(tarjeta);
+        });
 
-                const tarjeta = document.createElement('div');
-                tarjeta.className = "bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex flex-col gap-2";
-
-                tarjeta.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <span class="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${rep.tipo || 'Incidencia'}</span>
-                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full border flex items-center gap-1 ${badgeColor}">
-                            <i class="fa-solid ${iconoEstado}"></i> ${estadoLimpio}
-                        </span>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm">${rep.sector || 'Sector no especificado'}</h4>
-                        <p class="text-xs text-slate-600 mt-0.5">${rep.descripcion || 'Sin descripción'}</p>
-                    </div>
-                    <div class="text-[10px] text-slate-400 border-t border-slate-200 pt-1.5 flex justify-between">
-                        <span><i class="fa-regular fa-calendar mr-1"></i>${rep.fecha || 'Sin fecha'}</span>
-                        <span>ID: #${rep.id || '---'}</span>
-                    </div>
-                `;
-                contenedor.appendChild(tarjeta);
-            });
-
-        } catch (err) {
-            contenedor.innerHTML = `
-                <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-center text-xs">
-                    ❌ Error al buscar: ${err.message}
-                </div>`;
-        }
+    } catch (err) {
+        contenedor.innerHTML = `
+            <div style="background: #fadbd8; border: 1px solid #e74c3c; color: #c0392b; padding: 12px; border-radius: 8px; text-align: center; font-size: 13px;">
+                ❌ Error al buscar: ${err.message}
+            </div>`;
     }
+}
 </script>
