@@ -49,12 +49,32 @@
                         </button>
                     </div>
                 </div>
+<!-- TARJETAS DE CONTADORES DE ESTADO -->
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+        <p id="cantTotal" class="text-2xl font-bold text-slate-800">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-amber-500">
+        <span class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Pendientes</span>
+        <p id="cantPendientes" class="text-2xl font-bold text-amber-600">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+        <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">En Proceso</span>
+        <p id="cantEnProceso" class="text-2xl font-bold text-blue-600">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+        <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Resueltos</span>
+        <p id="cantResueltos" class="text-2xl font-bold text-emerald-600">0</p>
+    </div>
+</div>
 
-                <!-- Contenedor con Scroll para la Tabla -->
+                <!-- Contenedor con Scroll para la Tabla -->                
                 <div class="overflow-x-auto flex-1 max-h-[600px]">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+                                <th class="py-3 px-4"># ID</th>
                                 <th class="py-3 px-4">Fecha</th>
                                 <th class="py-3 px-4">Tipo / Sector</th>
                                 <th class="py-3 px-4">Estado</th>
@@ -176,6 +196,7 @@ if (reportesCargados.length === 0) {
                 
                 reportesCargados = await res.json();
                 renderizarTabla(reportesCargados);
+                actualizarContadores(reportesCargados);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-red-500 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No se pudo cargar la información: ${err.message}</td></tr>`;
             }
@@ -186,7 +207,7 @@ if (reportesCargados.length === 0) {
             tbody.innerHTML = '';
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400">No hay reportes ingresados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-slate-400">No hay reportes ingresados.</td></tr>`;
                 return;
             }
 
@@ -204,6 +225,7 @@ if (reportesCargados.length === 0) {
                 tr.onclick = () => verDetalle(rep);
 
                 tr.innerHTML = `
+                <td class="py-3 px-4 font-mono text-xs font-bold text-slate-600">#${rep.id}</td>
                     <td class="py-3 px-4 font-semibold text-slate-500 text-xs">${fechaFormateada}</td>
                     <td class="py-3 px-4">
                         <div class="font-bold text-slate-800">${rep.tipo || 'Sin tipo'}</div>
@@ -367,6 +389,17 @@ setTimeout(() => {
             cargarReportes();
         };
         setInterval(cargarReportes, 30000);
+        function actualizarContadores(reportes) {
+    const total = reportes.length;
+    const pendientes = reportes.filter(r => r.Estado === 'Pendiente').length;
+    const enProceso = reportes.filter(r => r.Estado === 'En Proceso').length;
+    const resueltos = reportes.filter(r => r.Estado === 'Resuelto').length;
+
+    document.getElementById('cantTotal').innerText = total;
+    document.getElementById('cantPendientes').innerText = pendientes;
+    document.getElementById('cantEnProceso').innerText = enProceso;
+    document.getElementById('cantResueltos').innerText = resueltos;
+}
     </script>
 </body>
 </html>
