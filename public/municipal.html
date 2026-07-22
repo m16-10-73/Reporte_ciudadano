@@ -33,21 +33,21 @@
     <!-- Contenedor Principal (Layout de 2 Columnas) -->
     <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
         
-        <!-- COLUMNA IZQUIERDA: Tabla de Reportes (8 de 12 columnas) -->
+        <!-- COLUMNA IZQUIERDA: Tabla de Reportes -->
         <section class="lg:col-span-7 flex flex-col gap-4">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
                 <div class="p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                     <h2 class="font-bold text-slate-800 text-lg">
-    <i class="fa-solid fa-list-check mr-2 text-slate-500"></i> Bandeja de Reportes
-</h2>
-<button onclick="cargarReportes()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition">
-    <i class="fa-solid fa-arrows-rotate"></i> Actualizar
-</button>
-
-<!-- NUEVO BOTÓN EXCEL (Justo debajo del de Actualizar) -->
-<button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition ml-2" style="background-color: #059669;">
-    <i class="fa-solid fa-file-excel"></i> Exportar a Excel
-</button>
+                        <i class="fa-solid fa-list-check mr-2 text-slate-500"></i> Bandeja de Reportes
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="cargarReportes()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition">
+                            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+                        </button>
+                        <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition">
+                            <i class="fa-solid fa-file-excel"></i> Exportar a Excel
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Contenedor con Scroll para la Tabla -->
@@ -56,13 +56,12 @@
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
                                 <th class="py-3 px-4">Fecha</th>
-                                <th class="py-3 px-4">Tipo  / Sector</th>
+                                <th class="py-3 px-4">Tipo / Sector</th>
                                 <th class="py-3 px-4">Estado</th>
                                 <th class="py-3 px-4 text-center">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="tablaReportes" class="text-sm text-slate-700 divide-y divide-slate-100">
-                            <!-- Los reportes se cargarán dinámicamente aquí -->
                             <tr>
                                 <td colspan="4" class="text-center py-10 text-slate-400">Cargando reportes...</td>
                             </tr>
@@ -72,7 +71,7 @@
             </div>
         </section>
 
-        <!-- COLUMNA DERECHA: Detalle del Reporte Seleccionado & Mapa (5 de 12 columnas) -->
+        <!-- COLUMNA DERECHA: Detalle del Reporte Seleccionado & Mapa -->
         <section class="lg:col-span-5 flex flex-col gap-6">
             
             <!-- Mapa Interactivo -->
@@ -81,7 +80,6 @@
                     <i class="fa-solid fa-map-location-dot mr-2 text-amber-500"></i> Ubicación del Incidente
                 </h3>
                 <div id="map"></div>
-                <!-- Caja para cuando el vecino no dé GPS -->
                 <div id="mapaError" class="hidden flex flex-col items-center justify-center bg-slate-200 text-slate-700 text-center font-medium rounded-xl p-6" style="height: 450px;">
                     <p class="text-lg font-bold text-amber-700">⚠️ Vecino no dio ubicación GPS</p>
                     <p class="text-sm mt-2 text-slate-600">Ver dirección manual en los detalles de la ficha.</p>
@@ -95,7 +93,6 @@
                         <span id="detTipo" class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Tipo</span>
                         <h3 class="font-bold text-slate-800 text-lg mt-2" id="detSector">Sector</h3>
                     </div>
-                    <!-- Control para cambiar el Estado -->
                     <div class="text-right">
                         <label class="block text-xs text-slate-400 font-semibold mb-1">CAMBIAR ESTADO</label>
                         <select id="selectEstado" onchange="actualizarEstadoServidor(); actualizarColorSelect(this.value)" class="bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold px-2.5 py-1.5 focus:ring-amber-500 focus:border-amber-500 outline-none">
@@ -107,21 +104,24 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Descripción -->
                     <div>
                         <h4 class="text-xs text-slate-400 font-bold uppercase mb-1">Descripción del Vecino</h4>
                         <p class="text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm" id="detDescripcion">Detalle...</p>
                     </div>
 
-                    <!-- Datos del Vecino -->
+                    <!-- Datos del Vecino independientes y ordenados -->
                     <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs">
-                        <div>
-                            <span class="text-slate-400 font-bold block uppercase">Reporta</span>
-                            <span class="text-slate-700 font-semibold" id="detVecino">Nombre</span>
+                        <div class="col-span-2">
+                            <span class="text-slate-400 font-bold block uppercase">Reporta (Vecino)</span>
+                            <span class="text-slate-800 font-bold text-sm" id="detVecino">Nombre del Vecino</span>
                         </div>
                         <div>
-                            <span class="text-slate-400 font-bold block uppercase">Contacto</span>
-                            <a href="#" class="text-amber-600 hover:underline font-semibold" id="detTelefono">Teléfono</a>
+                            <span class="text-slate-400 font-bold block uppercase">Correo Electrónico</span>
+                            <span class="text-slate-700 font-semibold truncate block" id="detEmail">correo@ejemplo.com</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block uppercase">Teléfono</span>
+                            <a href="#" class="text-amber-600 hover:underline font-semibold" id="detTelefono">No registra</a>
                         </div>
                     </div>
 
@@ -151,7 +151,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Configuración de la API: APUNTA EXACTAMENTE A TU BACKEND DE RENDER
         const API_URL = 'https://reporte-ciudadano-q7yn.onrender.com/reportes';
 
         let mapa;
@@ -159,7 +158,6 @@
         let reportesCargados = [];
         let reporteSeleccionado = null;
 
-        // 1. Inicializar el Mapa centrado por defecto en Coquimbo
         function inicializarMapa() {
             mapa = L.map('map').setView([-29.953, -71.339], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -167,7 +165,6 @@
             }).addTo(mapa);
         }
 
-        // 2. Cargar reportes desde el servidor
         async function cargarReportes() {
             const tbody = document.getElementById('tablaReportes');
             tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Cargando reportes...</td></tr>`;
@@ -183,7 +180,6 @@
             }
         }
 
-        // 3. Renderizar filas de la tabla de forma limpia
         function renderizarTabla(datos) {
             const tbody = document.getElementById('tablaReportes');
             tbody.innerHTML = '';
@@ -194,13 +190,11 @@
             }
 
             datos.forEach((rep) => {
-                // Limpiamos comillas simples del texto que viene de la base de datos para comparar bien
                 const estadoLimpio = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
 
-                // Configurar color unificado para las filas de la tabla
-                let badgeColor = "bg-red-100 text-red-800"; // Pendiente (Rojo)
-                if (estadoLimpio === "En Proceso") badgeColor = "bg-amber-100 text-amber-800"; // En Proceso (Amarillo)
-                if (estadoLimpio === "Resuelto") badgeColor = "bg-green-100 text-green-800"; // Resuelto (Verde)
+                let badgeColor = "bg-red-100 text-red-800";
+                if (estadoLimpio === "En Proceso") badgeColor = "bg-amber-100 text-amber-800";
+                if (estadoLimpio === "Resuelto") badgeColor = "bg-green-100 text-green-800";
 
                 const fechaFormateada = rep.fecha ? rep.fecha : 'Sin fecha';
 
@@ -227,7 +221,6 @@
             });
         }
 
-        // 4. Mostrar el detalle del reporte seleccionado en la ficha de la derecha
         function verDetalle(rep) {
             reporteSeleccionado = rep;
 
@@ -237,13 +230,14 @@
             document.getElementById('detTipo').innerText = rep.tipo || 'Sin Tipo'; 
             document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
             document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
-            document.getElementById('detVecino').innerText = rep.email || 'Anónimo'; 
+            
+            // Asignación correcta de campos separados
+            document.getElementById('detVecino').innerText = rep.Nombre_de_quien_reporta || 'Anónimo'; 
+            document.getElementById('detEmail').innerText = rep.email || 'No registra'; 
 
-            // Limpiamos comillas del estado para asignarlo correctamente al selector visual
             const estadoFicha = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
             document.getElementById('selectEstado').value = estadoFicha;
 
-            // Teléfono
             const telEl = document.getElementById('detTelefono');
             if (rep.Teléfono) {
                 telEl.innerText = rep.Teléfono;
@@ -255,7 +249,6 @@
                 telEl.classList.add('pointer-events-none', 'text-slate-400');
             }
 
-            // Imagen
             const imgEl = document.getElementById('detFoto');
             const noImgEl = document.getElementById('detSinFoto');
             if (rep.foto_url && rep.foto_url !== 'sin-foto') {
@@ -267,7 +260,6 @@
                 noImgEl.classList.remove('hidden');
             }
 
-            // 5. Manejar Ubicación en el Mapa (usando latitud y longitud)
             const mapEl = document.getElementById('map');
             const mapErrorEl = document.getElementById('mapaError');
 
@@ -287,15 +279,12 @@
             } else {
                 mapEl.classList.add('hidden');
                 if (mapErrorEl) mapErrorEl.classList.remove('hidden');
-
                 if (marcadorActual) mapa.removeLayer(marcadorActual);
             }
 
-            // Pintar el botón selector de forma limpia
             actualizarColorSelect(estadoFicha);
         } 
 
-        // 6. Actualizar el Estado en el Servidor de Render (y por ende, en Supabase)
         async function actualizarEstadoServidor() {
             if (!reporteSeleccionado) return;
 
@@ -311,7 +300,6 @@
                 if (!res.ok) throw new Error('Error de conexión con el servidor');
 
                 alert(`Estado actualizado con éxito a: ${nuevoEstado}`);
-                
                 reporteSeleccionado.Estado = nuevoEstado;
                 cargarReportes(); 
             } catch (err) {
@@ -325,10 +313,8 @@
             
             const estadoLimpio = estado ? estado.replace(/'/g, "").trim() : 'Pendiente';
             
-            // Limpiamos los colores viejos para que no se mezclen
             select.classList.remove('bg-slate-50', 'bg-amber-100', 'text-amber-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
             
-            // Aplicamos los colores según el estado limpio
             if (estadoLimpio === 'En Proceso') {
                 select.classList.add('bg-amber-100', 'text-amber-800'); 
             } else if (estadoLimpio === 'Resuelto') {
@@ -337,68 +323,28 @@
                 select.classList.add('bg-red-100', 'text-red-800'); 
             }
         }
-// 5. NUEVA FUNCIÓN EXCEL (Pegada en el espacio que abriste)
+
         window.exportarExcel = function() {
             const datosAExportar = typeof reportesCargados !== 'undefined' ? reportesCargados : [];
             if (datosAExportar.length === 0) {
-                alert("Falta enlazar la variable de datos en el código.");
+                alert("No hay reportes para exportar.");
                 return;
             }
-            // Variable para saber si la tabla está filtrada o no
-let filtradoActivo = false;
 
-window.verMisReportes = function() {
-    // 1. Si ya está filtrado, el botón sirve para restaurar la lista completa
-    if (filtradoActivo) {
-        renderizarTabla(reportesCargados);
-        filtradoActivo = false;
-        
-        // Opcional: Volver a cambiar el texto del botón si quieres
-        const btn = document.getElementById('btnMisReportes');
-        if (btn) btn.innerText = 'Ver mis reportes';
-        return;
-    }
-
-    // 2. Pedir el correo al vecino
-    const correoVecino = prompt("Por favor, ingresa tu correo electrónico para buscar tus reportes:");
-    
-    // Si cancela o lo deja vacío, no hacemos nada
-    if (!correoVecino || correoVecino.trim() === "") return;
-
-    const correoLimpio = correoVecino.trim().toLowerCase();
-
-    // 3. Filtrar los reportes usando la variable global que descubrimos denante
-    const misReportes = reportesCargados.filter(rep => {
-        const emailReporte = (rep.email || '').trim().toLowerCase();
-        return emailReporte === correoLimpio;
-    });
-
-    // 4. Validar si encontró algo
-    if (misReportes.length === 0) {
-        alert("No se encontraron reportes asociados al correo: " + correoVecino);
-        return;
-    }
-
-    // 5. Renderizar la tabla con el filtro y activar la bandera
-    renderizarTabla(misReportes);
-    filtradoActivo = true;
-
-    // Opcional: Cambiar el texto del botón para que el vecino sepa cómo volver atrás
-    const btn = document.getElementById('btnMisReportes');
-    if (btn) btn.innerText = 'Mostrar todos';
-}
             let csvContent = "\uFEFF";
-            csvContent += "Fecha y Hora;Tipo de Incidencia;Dirección/Sector;Descripción;Contacto Vecino;Teléfono;Estado\n";
+            csvContent += "Fecha y Hora;Tipo de Incidencia;Dirección/Sector;Descripción;Nombre Vecino;Correo;Teléfono;Estado\n";
             datosAExportar.forEach(rep => {
                 const fecha = rep.fecha || 'Sin fecha';
                 const tipo = (rep.tipo || '').replace(/;/g, ',');
                 const sector = (rep.sector || '').replace(/;/g, ',');
                 const desc = (rep.descripcion || '').replace(/;/g, ',').replace(/\n/g, ' ');
-                const vecino = (rep.email || 'Anónimo').replace(/;/g, ',');
+                const nombreVecino = (rep.Nombre_de_quien_reporta || 'Anónimo').replace(/;/g, ',');
+                const correo = (rep.email || '').replace(/;/g, ',');
                 const fono = rep.Teléfono || 'No registra';
                 const est = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
-                csvContent += `${fecha};${tipo};${sector};${desc};${vecino};${fono};${est}\n`;
+                csvContent += `${fecha};${tipo};${sector};${desc};${nombreVecino};${correo};${fono};${est}\n`;
             });
+
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -410,7 +356,6 @@ window.verMisReportes = function() {
             document.body.removeChild(link);
         }
 
-        // Inicializar el sistema al cargar la página
         window.onload = () => {
             inicializarMapa();
             cargarReportes();
