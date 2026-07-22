@@ -73,14 +73,20 @@
                 <div class="overflow-x-auto flex-1 max-h-[600px]">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
-                                <th class="py-3 px-4"># ID</th>
-                                <th class="py-3 px-4">Fecha</th>
-                                <th class="py-3 px-4">Tipo / Sector</th>
-                                <th class="py-3 px-4">Estado</th>
-                                <th class="py-3 px-4 text-center">Acción</th>
-                            </tr>
-                        </thead>
+  <tr class="text-xs uppercase tracking-wider text-slate-500 bg-slate-50">
+    <th class="py-3 px-4 w-12 text-left"># ID</th>
+    
+    <!-- Damos un ancho mínimo a Fecha para que no salte de línea -->
+    <th class="py-3 px-4 min-w-[140px] text-left">FECHA</th>
+    
+    <th class="py-3 px-4 text-left">TIPO / SECTOR</th>
+    
+    <!-- Damos un ancho mínimo a Estado para que "En Proceso" entre holgado -->
+    <th class="py-3 px-4 min-w-[120px] text-center">ESTADO</th>
+    
+    <th class="py-3 px-4 w-20 text-right">ACCIÓN</th>
+  </tr>
+</thead>
                         <tbody id="tablaReportes" class="text-sm text-slate-700 divide-y divide-slate-100">
                             <tr>
                                 <td colspan="4" class="text-center py-10 text-slate-400">Cargando reportes...</td>
