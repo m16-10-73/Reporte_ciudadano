@@ -286,8 +286,7 @@
         document.getElementById('modalMisReportes').classList.remove('flex');
         document.getElementById('modalMisReportes').classList.add('hidden');
     }
-
-   async function buscarReportesVecino() {
+async function buscarReportesVecino() {
     const correoInput = document.getElementById('inputCorreoModal').value.trim().toLowerCase();
     const contenedor = document.getElementById('listaResultadosVecino');
 
@@ -317,11 +316,36 @@
             return;
         }
 
-        contenedor.innerHTML = '';
+        // --- CALCULO DE CONTADORES ---
+        const totalPendientes = misReportes.filter(r => (r.Estado ? r.Estado.replace(/'/g, "").trim() : 'Pendiente') === 'Pendiente').length;
+        const totalEnProceso = misReportes.filter(r => (r.Estado ? r.Estado.replace(/'/g, "").trim() : '') === 'En Proceso').length;
+        const totalResueltos = misReportes.filter(r => (r.Estado ? r.Estado.replace(/'/g, "").trim() : '') === 'Resuelto').length;
+
+        // Construimos el bloque resumen con las 3 tarjetas de contadores
+        const resumenHTML = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #991b1b; font-weight: bold; text-transform: uppercase;">Pendientes</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #991b1b;">${totalPendientes}</span>
+                </div>
+                <div style="background: #fffbebf; border: 1px solid #fde68a; border-radius: 8px; padding: 8px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #92400e; font-weight: bold; text-transform: uppercase;">En Proceso</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #92400e;">${totalEnProceso}</span>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #166534; font-weight: bold; text-transform: uppercase;">Resueltos</span>
+                    <span style="font-size: 18px; font-weight: bold; color: #166534;">${totalResueltos}</span>
+                </div>
+            </div>
+        `;
+
+        // Insertamos el resumen en el contenedor
+        contenedor.innerHTML = resumenHTML;
+
+        // --- TARJETAS INDIVIDUALES ---
         misReportes.forEach(rep => {
             const estadoLimpio = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
 
-            // Colores fijos y seguros para los estados
             let badgeBg = "#fadbd8";
             let badgeColor = "#78281f";
             if (estadoLimpio === "En Proceso") {
@@ -331,6 +355,19 @@
             if (estadoLimpio === "Resuelto") {
                 badgeBg = "#d4efdf";
                 badgeColor = "#145a32";
+            }
+
+            let botonReenviarHTML = '';
+            if (estadoLimpio !== "Resuelto") {
+                const descEscapada = (rep.descripcion || '').replace(/"/g, '&quot;');
+                const sectorEscapado = (rep.sector || '').replace(/"/g, '&quot;');
+                
+                botonReenviarHTML = `
+                    <button type="button" onclick="reenviarReporte('${rep.id}', '${rep.tipo}', '${sectorEscapado}', '${descEscapada}')" 
+                            style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        🔄 Reenviar / Reiterar
+                    </button>
+                `;
             }
 
             const tarjeta = document.createElement('div');
@@ -345,9 +382,9 @@
                     <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #2d3748; font-weight: bold;">📍 ${rep.sector || 'Sector no especificado'}</h4>
                     <p style="margin: 0; font-size: 12px; color: #4a5568; line-height: 1.4;">${rep.descripcion || 'Sin descripción'}</p>
                 </div>
-                <div style="font-size: 11px; color: #a0aec0; border-top: 1px solid #edf2f7; padding-top: 8px; display: flex; justify-content: space-between;">
-                    <span>📅 ${rep.fecha || 'Sin fecha'}</span>
-                    <span style="font-weight: bold; color: #718096;">ID: #${rep.id || '---'}</span>
+                <div style="font-size: 11px; color: #a0aec0; border-top: 1px solid #edf2f7; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📅 ${rep.fecha || 'Sin fecha'} (ID: #${rep.id || '---'})</span>
+                    ${botonReenviarHTML}
                 </div>
             `;
             contenedor.appendChild(tarjeta);
@@ -360,4 +397,32 @@
             </div>`;
     }
 }
+// Función que toma un reporte antiguo y lo carga en el formulario principal para enviarlo de nuevo
+function reenviarReporte(id, tipo, sector, descripcion) {
+    // 1. Cargar los datos en los inputs del formulario
+    if (document.getElementById('tipo')) document.getElementById('tipo').value = tipo;
+    if (document.getElementById('sector')) document.getElementById('sector').value = sector;
+    if (document.getElementById('descripcion')) {
+        document.getElementById('descripcion').value = `[REITERACIÓN DE ID #${id}] ${descripcion}`;
+    }
+
+    // 2. Cerrar la ventana modal
+    cerrarModalMisReportes();
+
+    // 3. Hacer un scroll suave hacia el formulario y enfocarlo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert(`Se cargaron los datos del Reporte #${id} en el formulario.\nPuedes revisar o adjuntar una nueva foto y volver a enviar.`);
+}
+function reenviarReporte(id, tipo, sector, descripcion) {
+    if (document.getElementById('tipo')) document.getElementById('tipo').value = tipo;
+    if (document.getElementById('sector')) document.getElementById('sector').value = sector;
+    if (document.getElementById('descripcion')) {
+        document.getElementById('descripcion').value = `[REITERACIÓN DE ID #${id}] ${descripcion}`;
+    }
+
+    cerrarModalMisReportes();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert(`Se cargaron los datos del Reporte #${id} para reiterarlo.\nPuedes adjuntar una foto actualizada si deseas y presionar Enviar.`);
+}
+   
 </script>
