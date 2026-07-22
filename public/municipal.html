@@ -167,8 +167,9 @@
 
         async function cargarReportes() {
             const tbody = document.getElementById('tablaReportes');
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Cargando reportes...</td></tr>`;
-
+if (reportesCargados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Cargando reportes...</td></tr>`;
+}
             try {
                 const res = await fetch(API_URL);
                 if (!res.ok) throw new Error('Error al obtener datos');
@@ -272,11 +273,12 @@ function verDetalle(rep) {
                 if (mapErrorEl) mapErrorEl.classList.add('hidden');
 
                 const lat = parseFloat(rep.latitud);
-                const lon = parseFloat(rep.longitud);
+const lon = parseFloat(rep.longitud);
 
-                if (marcadorActual) mapa.removeLayer(marcadorActual);
-
-                mapa.setView([lat, lon], 15);
+setTimeout(() => {
+    mapa.invalidateSize();
+    mapa.setView([lat, lon], 15);
+}, 100);
                 marcadorActual = L.marker([lat, lon]).addTo(mapa)
                     .bindPopup(`<b>${rep.tipo}</b><br>${rep.sector}`)
                     .openPopup();
@@ -298,7 +300,7 @@ function verDetalle(rep) {
                 const res = await fetch(`https://reporte-ciudadano-q7yn.onrender.com/reportes/${reporteSeleccionado.id}`, {
                     method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Estado: `'${nuevoEstado}'` }) 
+                    body: JSON.stringify({ Estado: nuevoEstado }) 
                 });
 
                 if (!res.ok) throw new Error('Error de conexión con el servidor');
