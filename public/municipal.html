@@ -284,9 +284,11 @@ function verDetalle(rep) {
             const imgEl = document.getElementById('detFoto');
             const noImgEl = document.getElementById('detSinFoto');
             if (rep.foto_url && rep.foto_url !== 'sin-foto') {
-                imgEl.src = rep.foto_url;
-                imgEl.classList.remove('hidden');
-                noImgEl.classList.add('hidden');
+    imgEl.src = rep.foto_url;
+    imgEl.classList.remove('hidden');
+    imgEl.classList.add('cursor-pointer', 'hover:opacity-90', 'transition');
+    imgEl.onclick = () => abrirModalFoto(rep.foto_url);
+    noImgEl.classList.add('hidden');
             } else {
                 imgEl.classList.add('hidden');
                 noImgEl.classList.remove('hidden');
@@ -422,6 +424,25 @@ map.setView([lat, lng], 15);
     document.getElementById('cantEnProceso').innerText = enProceso;
     document.getElementById('cantResueltos').innerText = resueltos;
 }
+function abrirModalFoto(url) {
+    const modal = document.getElementById('modalFoto');
+    const imgModal = document.getElementById('imgModal');
+    imgModal.src = url;
+    modal.classList.remove('hidden');
+}
+
+function cerrarModalFoto() {
+    document.getElementById('modalFoto').classList.add('hidden');
+}
     </script>
+    <!-- Modal para Ampliar Foto -->
+<div id="modalFoto" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 cursor-pointer" onclick="cerrarModalFoto()">
+    <div class="relative max-w-4xl max-h-[90vh] flex items-center justify-center" onclick="event.stopPropagation()">
+        <button onclick="cerrarModalFoto()" class="absolute -top-10 right-0 text-white hover:text-amber-500 text-2xl font-bold transition">
+            <i class="fa-solid fa-xmark"></i> Cerrar
+        </button>
+        <img id="imgModal" src="" alt="Evidencia Ampliada" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain border border-slate-700">
+    </div>
+</div>
 </body>
 </html>
