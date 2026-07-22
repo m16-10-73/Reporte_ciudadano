@@ -75,7 +75,7 @@
         <thead>
   <tr class="text-xs uppercase tracking-wider text-slate-500 bg-slate-50">
     <th class="py-3 px-3 w-12 text-left"># ID</th>
-    <th class="py-3 px-3 min-w-[130px] text-left">FECHA</th>
+    <th class="py-3 px-3 min-w-[110px] text-left">FECHA</th>
     
     <!-- Angostamos esta columna definiendo un ancho máximo -->
     <th class="py-3 px-3 max-w-[180px] text-left">TIPO / SECTOR</th>
@@ -231,7 +231,7 @@ if (reportesCargados.length === 0) {
 
                 tr.innerHTML = `
                 <td class="py-3 px-4 font-mono text-xs font-bold text-slate-600">#${rep.id}</td>
-                    <td class="py-3 px-4 font-semibold text-slate-500 text-xs">${fechaFormateada}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-500 text-xs whitespace-nowrap">${fechaFormateada}</td>
                     <td class="py-3 px-4 max-w-[180px] truncate">
                         <div class="font-bold text-slate-800 truncate">${rep.tipo || 'Sin tipo'}</div>
                         <div class="text-xs text-slate-400 max-w-xs truncate">${rep.sector || 'Sin sector'}</div>
