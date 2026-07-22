@@ -391,9 +391,9 @@ setTimeout(() => {
         setInterval(cargarReportes, 30000);
         function actualizarContadores(reportes) {
     const total = reportes.length;
-    const pendientes = reportes.filter(r => r.Estado === 'Pendiente').length;
-    const enProceso = reportes.filter(r => r.Estado === 'En Proceso').length;
-    const resueltos = reportes.filter(r => r.Estado === 'Resuelto').length;
+  const pendientes = reportes.filter(r => r.Estado && r.Estado.includes('Pendiente')).length;
+    const enProceso = reportes.filter(r => r.Estado && r.Estado.includes('En Proceso')).length;
+    const resueltos = reportes.filter(r => r.Estado && r.Estado.includes('Resuelto')).length;
 
     document.getElementById('cantTotal').innerText = total;
     document.getElementById('cantPendientes').innerText = pendientes;
