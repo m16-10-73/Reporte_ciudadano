@@ -156,7 +156,7 @@
 
 <script>
     // Código para geolocalizar de forma automática al abrir la app
-    if (navigator.geolocation) {
+  if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
             // Guardamos las coordenadas reales en variables globales fuera de la función
@@ -185,40 +185,177 @@
     } else {
         document.getElementById('gpsStatus').innerHTML = `⚠️ Tu navegador no soporta geolocalización.`;
     }
-    // Esta función lee el estado del checkbox y limpia o rellena el formulario
-function alternarUbicacionGPS() {
-    const quiereGPS = document.getElementById('chkUsarGPS').checked;
-    const cajaGpsStatus = document.getElementById('gpsStatus');
-    
-    // Recuperamos los datos guardados en el paso anterior
-    const lat = window.latitudGuardada;
-    const lon = window.longitudGuardada;
 
-    if (quiereGPS && lat && lon) {
-        // SI EL VECINO QUIERE GPS: Asignamos todo con normalidad
-        document.getElementById('latitud').value = lat;
-        document.getElementById('longitud').value = lon;
-        document.getElementById('sectorGPS').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+    // Esta función lee el estado del checkbox y limpia o rellena el formulario
+    function alternarUbicacionGPS() {
+        const quiereGPS = document.getElementById('chkUsarGPS').checked;
+        const cajaGpsStatus = document.getElementById('gpsStatus');
         
-        if (cajaGpsStatus) {
-            cajaGpsStatus.innerHTML = `📍 ¡Ubicación Satelital Confirmada!`;
-            cajaGpsStatus.style.display = 'block';
-            cajaGpsStatus.style.background = '#e8f8f5';
-            cajaGpsStatus.style.borderLeft = '4px solid #2ecc71';
+        // Recuperamos los datos guardados en el paso anterior
+        const lat = window.latitudGuardada;
+        const lon = window.longitudGuardada;
+
+        if (quiereGPS && lat && lon) {
+            // SI EL VECINO QUIERE GPS: Asignamos todo con normalidad
+            document.getElementById('latitud').value = lat;
+            document.getElementById('longitud').value = lon;
+            document.getElementById('sectorGPS').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+            
+            if (cajaGpsStatus) {
+                cajaGpsStatus.innerHTML = `📍 ¡Ubicación Satelital Confirmada!`;
+                cajaGpsStatus.style.display = 'block';
+                cajaGpsStatus.style.background = '#e8f8f5';
+                cajaGpsStatus.style.borderLeft = '4px solid #2ecc71';
+            }
+        } else {
+            // SI EL VECINO LO APAGA: Vaciamos absolutamente todos los campos de geolocalización
+            document.getElementById('latitud').value = '';
+            document.getElementById('longitud').value = '';
+            document.getElementById('sectorGPS').value = '';
+            
+            if (cajaGpsStatus) {
+                // Escondemos la caja verde para que visualmente se note que se desactivó el rastreo
+                cajaGpsStatus.style.display = 'none'; 
+            }
+            console.log("Coordenadas anuladas. El servidor procesará el reporte usando solo la dirección de texto.");
         }
-    } else {
-        // SI EL VECINO LO APAGA: Vaciamos absolutamente todos los campos de geolocalización
-        document.getElementById('latitud').value = '';
-        document.getElementById('longitud').value = '';
-        document.getElementById('sectorGPS').value = '';
-        
-        if (cajaGpsStatus) {
-            // Escondemos la caja verde para que visualmente se note que se desactivó el rastreo
-            cajaGpsStatus.style.display = 'none'; 
-        }
-        console.log("Coordenadas anuladas. El servidor procesará el reporte usando solo la dirección de texto.");
     }
-}
 </script>
-</body>
-</html>
+
+<!-- VENTANA FLOTANTE (MODAL) DE MIS REPORTES -->
+<div id="modalMisReportes" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative max-h-[90vh] flex flex-col">
+        
+        <!-- Cabecera del Modal -->
+        <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <i class="fa-solid fa-address-book text-amber-500"></i> Mis Reportes Ingresados
+            </h3>
+            <button type="button" onclick="cerrarModalMisReportes()" class="text-slate-400 hover:text-slate-600 text-lg font-bold px-2">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Cuerpo: Input de Correo y Botón de Búsqueda -->
+        <div class="py-4 space-y-3">
+            <p class="text-xs text-slate-500">Ingresa el correo con el que enviaste tus reportes para consultar su estado en tiempo real:</p>
+            <div class="flex gap-2">
+                <input type="email" id="inputCorreoModal" placeholder="tucorreo@ejemplo.com" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                <button type="button" onclick="buscarReportesVecino()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition">
+                    Buscar
+                </button>
+            </div>
+        </div>
+
+        <!-- Listado de Resultados con Scroll -->
+        <div id="listaResultadosVecino" class="flex-1 overflow-y-auto space-y-3 py-2 pr-1">
+            <div class="text-center py-8 text-slate-400 text-xs">
+                Escribe tu correo y presiona buscar.
+            </div>
+        </div>
+
+        <!-- Pie del Modal -->
+        <div class="pt-4 border-t border-slate-100 text-right">
+            <button type="button" onclick="cerrarModalMisReportes()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL_PORTAL = 'https://reporte-ciudadano-q7yn.onrender.com/reportes';
+
+    // Función para abrir el modal cuando hacen clic en "Ver mis reportes"
+    function abrirModalMisReportes() {
+        document.getElementById('modalMisReportes').classList.remove('hidden');
+        document.getElementById('modalMisReportes').classList.add('flex');
+        
+        const correoEscrito = document.getElementById('email'); 
+        if (correoEscrito && correoEscrito.value) {
+            document.getElementById('inputCorreoModal').value = correoEscrito.value;
+        }
+    }
+
+    function cerrarModalMisReportes() {
+        document.getElementById('modalMisReportes').classList.remove('flex');
+        document.getElementById('modalMisReportes').classList.add('hidden');
+    }
+
+    async function buscarReportesVecino() {
+        const correoInput = document.getElementById('inputCorreoModal').value.trim().toLowerCase();
+        const contenedor = document.getElementById('listaResultadosVecino');
+
+        if (!correoInput || !correoInput.includes('@')) {
+            alert('Por favor, ingresa un correo electrónico válido.');
+            return;
+        }
+
+        contenedor.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Buscando tus reportes...</div>`;
+
+        try {
+            const res = await fetch(API_URL_PORTAL);
+            if (!res.ok) throw new Error('No se pudo conectar con el servidor.');
+
+            const todos = await res.json();
+            
+            // Filtramos solo los reportes que coincidan con el correo del vecino
+            const misReportes = todos.filter(rep => {
+                const correoRep = rep.email ? rep.email.toLowerCase().trim() : '';
+                return correoRep === correoInput;
+            });
+
+            if (misReportes.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-center text-xs font-medium">
+                        ⚠️ No encontramos reportes asociados a: <b>${correoInput}</b>
+                    </div>`;
+                return;
+            }
+
+            // Dibujamos el listado en formato de tarjetas ordenadas
+            contenedor.innerHTML = '';
+            misReportes.forEach(rep => {
+                const estadoLimpio = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
+
+                let badgeColor = "bg-red-100 text-red-800 border-red-200";
+                let iconoEstado = "fa-clock";
+                if (estadoLimpio === "En Proceso") {
+                    badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
+                    iconoEstado = "fa-spinner";
+                }
+                if (estadoLimpio === "Resuelto") {
+                    badgeColor = "bg-green-100 text-green-800 border-green-200";
+                    iconoEstado = "fa-circle-check";
+                }
+
+                const tarjeta = document.createElement('div');
+                tarjeta.className = "bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex flex-col gap-2";
+
+                tarjeta.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${rep.tipo || 'Incidencia'}</span>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full border flex items-center gap-1 ${badgeColor}">
+                            <i class="fa-solid ${iconoEstado}"></i> ${estadoLimpio}
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">${rep.sector || 'Sector no especificado'}</h4>
+                        <p class="text-xs text-slate-600 mt-0.5">${rep.descripcion || 'Sin descripción'}</p>
+                    </div>
+                    <div class="text-[10px] text-slate-400 border-t border-slate-200 pt-1.5 flex justify-between">
+                        <span><i class="fa-regular fa-calendar mr-1"></i>${rep.fecha || 'Sin fecha'}</span>
+                        <span>ID: #${rep.id || '---'}</span>
+                    </div>
+                `;
+                contenedor.appendChild(tarjeta);
+            });
+
+        } catch (err) {
+            contenedor.innerHTML = `
+                <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-center text-xs">
+                    ❌ Error al buscar: ${err.message}
+                </div>`;
+        }
+    }
+</script>
