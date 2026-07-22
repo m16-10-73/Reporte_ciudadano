@@ -307,10 +307,12 @@ setTimeout(() => {
     mapa.setView([lat, lon], 15);
 }, 100);
                 if (markerActual) map.removeLayer(markerActual);
-markerActual = L.marker([lat, lng]).addTo(map).bindPopup(rep.sector || '').openPopup();
-map.setView([lat, lng], 15)
-                    .bindPopup(`<b>${rep.tipo}</b><br>${rep.sector}`)
-                    .openPopup();
+
+markerActual = L.marker([lat, lng]).addTo(map)
+    .bindPopup(`<b>${rep.tipo || ''}</b><br>${rep.sector || ''}`)
+    .openPopup();
+
+map.setView([lat, lng], 15);
             } else {
                 mapEl.classList.add('hidden');
                 if (mapErrorEl) mapErrorEl.classList.remove('hidden');
