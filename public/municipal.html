@@ -12,6 +12,39 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #map { height: 450px; width: 100%; border-radius: 12px; }
+        /* REGLAS PARA IMPRESIÓN OFICIAL DE ORDEN DE TRABAJO */
+        @media print {
+            header, nav, aside, section:first-child, #map, #mapaError, .no-imprimir, button, #fichaVacia {
+                display: none !important;
+            }
+
+            body, main {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            #fichaDetalle {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                border: 2px solid #333 !important;
+                padding: 20px !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+
+            #fichaDetalle img {
+                max-height: 380px !important;
+                width: auto !important;
+                object-fit: contain !important;
+                margin: 10px auto !important;
+                display: block !important;
+                border: 1px solid #ccc !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans flex flex-col">
