@@ -162,7 +162,18 @@
                     </div>
                 </div>
             </div>
-
+<!-- BANDEJA DE DERIVACIÓN Y GESTIÓN OPERATIVA -->
+                    <div class="no-imprimir pt-4 border-t border-slate-200 flex flex-wrap gap-2">
+                        <button onclick="derivarWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition shadow-sm">
+                            <i class="fa-brands fa-whatsapp text-base"></i> WhatsApp
+                        </button>
+                        <button onclick="derivarEmail()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition shadow-sm">
+                            <i class="fa-solid fa-envelope text-base"></i> Email
+                        </button>
+                        <button onclick="imprimirOrden()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition shadow-sm">
+                            <i class="fa-solid fa-print text-base"></i> Imprimir
+                        </button>
+                    </div>
             <!-- Ficha vacía por defecto -->
             <div id="fichaVacia" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex-1 flex flex-col items-center justify-center text-center text-slate-400">
                 <i class="fa-solid fa-mouse-pointer text-4xl mb-3 text-slate-300"></i>
@@ -375,7 +386,66 @@ map.setView([lat, lng], 15);
                 select.classList.add('bg-red-100', 'text-red-800'); 
             }
         }
+// ==========================================
+        // FUNCIONES DE DERIVACIÓN Y DESPACHO OPERATIVO
+        // ==========================================
 
+        function derivarWhatsApp() {
+            if (!reporteSeleccionado) return;
+            const r = reporteSeleccionado;
+            const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS registrado';
+            const foto = (r.foto_url && r.foto_url !== 'sin-foto') ? r.foto_url : 'Sin foto';
+
+            const mensaje = 
+`*ORDEN DE TRABAJO - MUNICIPALIDAD DE COQUIMBO*
+---------------------------------------
+*Folio:* #${r.id || ''}
+*Tipo:* ${r.tipo || 'Sin Tipo'}
+*Sector/Dirección:* ${r.sector || 'No especificado'}
+*Descripción:* ${r.descripcion || 'Sin detalle'}
+---------------------------------------
+*Ruta GPS:* ${mapaUrl}
+*Evidencia Foto:* ${foto}
+---------------------------------------
+_Favor gestionar en terreno y confirmar actualización de estado._`;
+
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
+        }
+
+        function derivarEmail() {
+            if (!reporteSeleccionado) return;
+            const r = reporteSeleccionado;
+            const correo = prompt("Ingrese el correo del supervisor, jefatura o entidad externa:");
+            
+            if (correo) {
+                const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS registrado';
+                const asunto = `[ORDEN DE TRABAJO #${r.id || ''}] Derivación de Incidencia - ${r.tipo || 'General'}`;
+                const cuerpo = 
+`Estimado/a Supervisor/a,
+
+Se deriva la siguiente orden de trabajo reportada por la comunidad para su atención e inspección en terreno:
+
+- Folio: #${r.id || ''}
+- Tipo de Incidencia: ${r.tipo || 'Sin Tipo'}
+- Sector / Ubicación: ${r.sector || 'No especificado'}
+- Descripción: ${r.descripcion || 'Sin detalle'}
+- Vecino que Reporta: ${r.Nombre_de_quien_reporta || 'Anónimo'} (Tel: ${r.Teléfono || 'Sin fono'})
+- Coordenadas GPS: ${mapaUrl}
+
+Quedamos a la espera de su gestión.
+
+Atentamente,
+Departamento de Operaciones y Gestión Territorial
+Municipalidad de Coquimbo`;
+
+                window.location.href = `mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+            }
+        }
+
+        function imprimirOrden() {
+            if (!reporteSeleccionado) return;
+            window.print();
+        }
         window.exportarExcel = function() {
             const datosAExportar = typeof reportesCargados !== 'undefined' ? reportesCargados : [];
             if (datosAExportar.length === 0) {
