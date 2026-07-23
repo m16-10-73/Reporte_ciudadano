@@ -419,26 +419,30 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
             
             if (correo) {
                 const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS registrado';
-                const asunto = `[ORDEN DE TRABAJO #${r.id || ''}] Derivación de Incidencia - ${r.tipo || 'General'}`;
+                const fotoUrl = (r.foto_url && r.foto_url !== 'sin-foto') ? r.foto_url : 'Sin foto adjunta';
+                
+                const asunto = `[ORDEN DE TRABAJO #${r.id || ''}] Incidencia - ${r.tipo || 'General'}`;
                 const cuerpo = 
 `Estimado/a Supervisor/a,
 
-Se deriva la siguiente orden de trabajo reportada por la comunidad para su atención e inspección en terreno:
+Se deriva la siguiente orden de trabajo reportada para su atención en terreno:
 
 - Folio: #${r.id || ''}
-- Tipo de Incidencia: ${r.tipo || 'Sin Tipo'}
+- Tipo: ${r.tipo || 'Sin Tipo'}
 - Sector / Ubicación: ${r.sector || 'No especificado'}
 - Descripción: ${r.descripcion || 'Sin detalle'}
 - Vecino que Reporta: ${r.Nombre_de_quien_reporta || 'Anónimo'} (Tel: ${r.Teléfono || 'Sin fono'})
-- Coordenadas GPS: ${mapaUrl}
 
-Quedamos a la espera de su gestión.
+---------------------------------------
+UBICACIÓN GPS: ${mapaUrl}
+FOTO EVIDENCIA: ${fotoUrl}
+---------------------------------------
 
 Atentamente,
-Departamento de Operaciones y Gestión Territorial
 Municipalidad de Coquimbo`;
 
-                window.location.href = `mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+                // Abre directamente el gestor de correo configurado en el equipo
+                window.open(`mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_self');
             }
         }
 
