@@ -416,36 +416,41 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
             if (!reporteSeleccionado) return;
             const r = reporteSeleccionado;
             
-            // Detecta la URL de la foto sin importar qué nombre de variable tenga tu objeto
+            // Busca la propiedad de la foto de forma segura
             const fotoEncontrada = r.foto_url || r.foto || r.imagen || r.url_foto || r.imagen_url || '';
-            const fotoUrl = (fotoEncontrada && fotoEncontrada !== 'sin-foto') ? fotoEncontrada : 'Sin foto adjunta';
-            
-            const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS registrado';
+            const fotoUrl = (fotoEncontrada && fotoEncontrada !== 'sin-foto') ? fotoEncontrada : 'Sin foto';
+            const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS';
             
             const correo = prompt("Ingrese el correo del supervisor o jefatura:");
             
             if (correo) {
                 const asunto = `[ORDEN DE TRABAJO #${r.id || ''}] Incidencia - ${r.tipo || 'General'}`;
-                const cuerpo = 
-`Estimado/a Supervisor/a,
+                
+                // Texto en una sola estructura sin saltos extra que rompan el Mailto
+                const lineas = [
+                    "Estimado/a Supervisor/a,",
+                    "",
+                    "Se deriva la siguiente orden de trabajo para su atencion:",
+                    "",
+                    `- Folio: #${r.id || ''}`,
+                    `- Tipo: ${r.tipo || 'Sin Tipo'}`,
+                    `- Sector: ${r.sector || 'No especificado'}`,
+                    `- Descripcion: ${r.descripcion || 'Sin detalle'}`,
+                    `- Vecino: ${r.Nombre_de_quien_reporta || 'Anonimo'} (Tel: ${r.Teléfono || 'Sin fono'})`,
+                    "",
+                    `UBICACION GPS: ${mapaUrl}`,
+                    `FOTO EVIDENCIA: ${fotoUrl}`,
+                    "",
+                    "Atentamente,",
+                    "Municipalidad de Coquimbo"
+                ];
 
-Se deriva la siguiente orden de trabajo reportada para su atención en terreno:
+                const cuerpoTexto = lineas.join("\n");
 
-- Folio: #${r.id || ''}
-- Tipo: ${r.tipo || 'Sin Tipo'}
-- Sector / Ubicación: ${r.sector || 'No especificado'}
-- Descripción: ${r.descripcion || 'Sin detalle'}
-- Vecino que Reporta: ${r.Nombre_de_quien_reporta || 'Anónimo'} (Tel: ${r.Teléfono || 'Sin fono'})
-
----------------------------------------
-UBICACIÓN GPS: ${mapaUrl}
-FOTO EVIDENCIA: ${fotoUrl}
----------------------------------------
-
-Atentamente,
-Municipalidad de Coquimbo`;
-
-                window.open(`mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_self');
+                // Genera la URL con codificación segura de URI
+                const mailtoUrl = `mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpoTexto)}`;
+                
+                window.location.href = mailtoUrl;
             }
         }
 
