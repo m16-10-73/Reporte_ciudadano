@@ -415,12 +415,16 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
         function derivarEmail() {
             if (!reporteSeleccionado) return;
             const r = reporteSeleccionado;
-            const correo = prompt("Ingrese el correo del supervisor, jefatura o entidad externa:");
+            
+            // Detecta la URL de la foto sin importar qué nombre de variable tenga tu objeto
+            const fotoEncontrada = r.foto_url || r.foto || r.imagen || r.url_foto || r.imagen_url || '';
+            const fotoUrl = (fotoEncontrada && fotoEncontrada !== 'sin-foto') ? fotoEncontrada : 'Sin foto adjunta';
+            
+            const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS registrado';
+            
+            const correo = prompt("Ingrese el correo del supervisor o jefatura:");
             
             if (correo) {
-                const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS registrado';
-                const fotoUrl = (r.foto_url && r.foto_url !== 'sin-foto') ? r.foto_url : 'Sin foto adjunta';
-                
                 const asunto = `[ORDEN DE TRABAJO #${r.id || ''}] Incidencia - ${r.tipo || 'General'}`;
                 const cuerpo = 
 `Estimado/a Supervisor/a,
@@ -441,7 +445,6 @@ FOTO EVIDENCIA: ${fotoUrl}
 Atentamente,
 Municipalidad de Coquimbo`;
 
-                // Abre directamente el gestor de correo configurado en el equipo
                 window.open(`mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_self');
             }
         }
