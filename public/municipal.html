@@ -39,7 +39,7 @@
                 display: block !important;
             }
 
-            /* 4. Ajustar el mapa en la impresión: si está oculto en pantalla, se oculta en impresión */
+            /* 4. Ajustar el mapa y la tarjeta de ubicación en la impresión */
             #map:not(.hidden) {
                 display: block !important;
                 visibility: visible !important;
@@ -51,6 +51,12 @@
 
             #map.hidden {
                 display: none !important;
+            }
+
+            /* Si el reporte NO tiene GPS, reduce al mínimo la tarjeta blanca superior */
+            #map.hidden ~ * {
+                margin-top: 0 !important;
+                padding: 10px !important;
             }
 
             .leaflet-container,
