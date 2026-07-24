@@ -533,9 +533,15 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
         }
 
         function imprimirOrden() {
-            if (!reporteSeleccionado) return;
-            window.print();
+    if (!reporteSeleccionado) return;
+    if (map) {
+        map.invalidateSize();
+        if (marcadorActual) {
+            map.panTo(marcadorActual.getLatLng());
         }
+    }
+    window.print();
+}
         window.exportarExcel = function() {
             const datosAExportar = typeof reportesCargados !== 'undefined' ? reportesCargados : [];
             if (datosAExportar.length === 0) {
