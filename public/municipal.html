@@ -11,114 +11,79 @@
     <!-- Leaflet CSS (Para el Mapa) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 450px; width: 100%; border-radius: 12px; }
-        /* REGLAS PARA IMPRESIÓN OFICIAL DE ORDEN DE TRABAJO */
-       @media print {
-    /* 1. Ocultar la navegación superior, la tabla de reportes y las métricas */
-    header, 
-    nav, 
-    main > div:first-child, 
-    button {
-        display: none !important;
-    }
+ #map { height: 450px; width: 100%; border-radius: 12px; }
 
-    /* 2. Mantener visible solo la ficha del incidente */
-    body {
-        background: white !important;
-    }
-
-    /* 3. Ajuste de dimensiones del mapa */
-    #map {
-        display: block !important;
-        visibility: visible !important;
-        height: 180px !important;
-        width: 100% !important;
-    }
-
-    /* 4. Asegurar la visualización de mosaicos del mapa */
-    .leaflet-container,
-    .leaflet-tile-container img,
-    .leaflet-marker-icon {
-        visibility: visible !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* 5. Ajustar alto de fotografía para encajar en la misma hoja */
-    #detFoto {
-        max-height: 120px !important;
-        object-fit: contain !important;
-    }
-
-    /* 6. Espaciado compacto para el bloque de firmas */
-    .firmas-contenedor {
-        margin-top: 1rem !important;
-        padding-top: 0.5rem !important;
-        page-break-inside: avoid !important;
-    }
-    /* Compactar espacio de firmas */
-    .firmas-contenedor {
-        margin-top: 1rem !important;
-        padding-top: 0.5rem !important;
-        page-break-inside: avoid !important;
-    }
-            body, main {
-                background: white !important;
-                color: black !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
+        /* REGLAS EXCLUSIVAS DE IMPRESIÓN EN 1 SOLA HOJA */
+        @media print {
+            /* 1. Ocultar header, tabla de la izquierda, botones y ficha vacía */
+            header,
+            section:first-child,
+            .no-imprimir,
+            #fichaVacia,
+            button {
+                display: none !important;
             }
 
+            /* 2. Resetear el fondo de la página */
+            body, main {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            /* 3. Hacer que la columna derecha ocupe todo el ancho */
+            section:last-child {
+                width: 100% !important;
+                max-width: 100% !important;
+                display: block !important;
+            }
+
+            /* 4. Ajustar el mapa en la impresión */
+            #map {
+                display: block !important;
+                visibility: visible !important;
+                height: 180px !important;
+                width: 100% !important;
+                margin-bottom: 10px !important;
+            }
+
+            .leaflet-container,
+            .leaflet-tile-container img,
+            .leaflet-marker-icon {
+                visibility: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 5. Ajustar la Ficha de Detalle */
             #fichaDetalle {
                 display: block !important;
                 width: 100% !important;
-                max-width: 100% !important;
-                border: 2px solid #1e293b !important;
-                padding: 24px !important;
+                border: 1px solid #cbd5e1 !important;
+                padding: 12px !important;
                 box-shadow: none !important;
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
             }
 
-            #fichaDetalle img {
-                max-height: 280px !important;
+            /* 6. Controlar el tamaño de la foto (en tu código es #fichaDetalle img o #detFoto) */
+            #fichaDetalle img,
+            #detFoto {
+                max-height: 110px !important;
                 width: auto !important;
                 object-fit: contain !important;
-                margin: 12px auto !important;
+                margin: 0 auto !important;
                 display: block !important;
-                border: 1px solid #cbd5e1 !important;
             }
 
-            /* Muestra el bloque de firmas solo en la impresión */
-            .bloque-firmas {
-                display: block !important;
+            /* 7. Bloque de Firmas al pie */
+            .firmas-contenedor {
+                margin-top: 15px !important;
+                padding-top: 10px !important;
+                border-top: 1px solid #cbd5e1 !important;
+                page-break-inside: avoid !important;
             }
         }
-        @media print {
-    /* Forzar que el contenedor del mapa sea visible y mantenga su tamaño */
-    #map {
-        display: block !important;
-        visibility: visible !important;
-        height: 250px !important;
-        width: 100% !important;
-        position: relative !important;
-        
-        .firmas-contenedor {
-        margin-top: 1.5rem !important;
-        padding-top: 1rem !important;
-        page-break-inside: avoid !important;
-    }
-    }
-    
-    /* Asegurar que los tiles/imágenes del mapa y marcadores no se borren */
-    .leaflet-container,
-    .leaflet-tile-container img,
-    .leaflet-marker-icon {
-        visibility: visible !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-}
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans flex flex-col">
