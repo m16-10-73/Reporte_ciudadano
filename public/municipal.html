@@ -14,7 +14,7 @@
         #map { height: 450px; width: 100%; border-radius: 12px; }
         /* REGLAS PARA IMPRESIÓN OFICIAL DE ORDEN DE TRABAJO */
         @media print {
-            header, nav, aside, section:first-child, #map, #mapaError, .no-imprimir, button, #fichaVacia {
+            header, nav, aside, section:first-child, #map, #mapaError, .no-imprimir, button, #fichaVacia, select {
                 display: none !important;
             }
 
@@ -30,19 +30,24 @@
                 display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                border: 2px solid #333 !important;
-                padding: 20px !important;
+                border: 2px solid #1e293b !important;
+                padding: 24px !important;
                 box-shadow: none !important;
                 page-break-inside: avoid;
             }
 
             #fichaDetalle img {
-                max-height: 380px !important;
+                max-height: 280px !important;
                 width: auto !important;
                 object-fit: contain !important;
-                margin: 10px auto !important;
+                margin: 12px auto !important;
                 display: block !important;
-                border: 1px solid #ccc !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            /* Muestra el bloque de firmas solo en la impresión */
+            .bloque-firmas {
+                display: block !important;
             }
         }
     </style>
@@ -294,65 +299,62 @@ if (reportesCargados.length === 0) {
         }
 
 function verDetalle(rep) {
-            reporteSeleccionado = rep;
+    reporteSeleccionado = rep;
 
-            document.getElementById('fichaVacia').classList.add('hidden');
-            document.getElementById('fichaDetalle').classList.remove('hidden');
+    document.getElementById('fichaVacia').classList.add('hidden');
+    document.getElementById('fichaDetalle').classList.remove('hidden');
 
-            // El tipo de reporte (Ej: OTRO, Bache, etc.) se queda con su estilo fijo original
-            const tipoEl = document.getElementById('detTipo');
-            tipoEl.innerText = rep.tipo || 'Sin Tipo'; 
-            tipoEl.className = "bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase";
+    const tipoEl = document.getElementById('detTipo');
+    tipoEl.innerText = rep.tipo || 'Sin Tipo'; 
+    tipoEl.className = "bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase";
 
-            document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
-            document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
-            
-            // Datos del vecino separados
-            document.getElementById('detVecino').innerText = rep.Nombre_de_quien_reporta || 'Anónimo'; 
-            document.getElementById('detEmail').innerText = rep.email || 'No registra'; 
+    document.getElementById('detSector').innerText = rep.sector || 'Sector no especificado';
+    document.getElementById('detDescripcion').innerText = rep.descripcion || 'Sin descripción';
+    
+    document.getElementById('detVecino').innerText = rep.Nombre_de_quien_reporta || 'Anónimo'; 
+    document.getElementById('detEmail').innerText = rep.email || 'No registra'; 
 
-            const estadoFicha = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
-            document.getElementById('selectEstado').value = estadoFicha;
+    const estadoFicha = rep.Estado ? rep.Estado.replace(/'/g, "").trim() : 'Pendiente';
+    document.getElementById('selectEstado').value = estadoFicha;
 
-            const telEl = document.getElementById('detTelefono');
-            if (rep.Teléfono) {
-                telEl.innerText = rep.Teléfono;
-                telEl.href = `tel:${rep.Teléfono}`;
-                telEl.classList.remove('pointer-events-none', 'text-slate-400');
-            } else {
-                telEl.innerText = 'No registra';
-                telEl.href = '#';
-                telEl.classList.add('pointer-events-none', 'text-slate-400');
-            }
+    const telEl = document.getElementById('detTelefono');
+    if (rep.Teléfono) {
+        telEl.innerText = rep.Teléfono;
+        telEl.href = `tel:${rep.Teléfono}`;
+        telEl.classList.remove('pointer-events-none', 'text-slate-400');
+    } else {
+        telEl.innerText = 'No registra';
+        telEl.href = '#';
+        telEl.classList.add('pointer-events-none', 'text-slate-400');
+    }
 
-            const imgEl = document.getElementById('detFoto');
-            const noImgEl = document.getElementById('detSinFoto');
-            if (rep.foto_url && rep.foto_url !== 'sin-foto') {
-    imgEl.src = rep.foto_url;
-    imgEl.classList.remove('hidden');
-    imgEl.classList.add('cursor-pointer', 'hover:opacity-90', 'transition');
-    imgEl.onclick = () => abrirModalFoto(rep.foto_url);
-    noImgEl.classList.add('hidden');
-            } else {
-                imgEl.classList.add('hidden');
-                noImgEl.classList.remove('hidden');
-            }
+    const imgEl = document.getElementById('detFoto');
+    const noImgEl = document.getElementById('detSinFoto');
+    if (rep.foto_url && rep.foto_url !== 'sin-foto') {
+        imgEl.src = rep.foto_url;
+        imgEl.classList.remove('hidden');
+        imgEl.classList.add('cursor-pointer', 'hover:opacity-90', 'transition');
+        imgEl.onclick = () => abrirModalFoto(rep.foto_url);
+        noImgEl.classList.add('hidden');
+    } else {
+        imgEl.classList.add('hidden');
+        noImgEl.classList.remove('hidden');
+    }
 
-            const mapEl = document.getElementById('map');
-            const mapErrorEl = document.getElementById('mapaError');
+    const mapEl = document.getElementById('map');
+    const mapErrorEl = document.getElementById('mapaError');
 
-            if (rep.latitud && rep.longitud) {
-                mapEl.classList.remove('hidden');
-                if (mapErrorEl) mapErrorEl.classList.add('hidden');
+    if (rep.latitud && rep.longitud) {
+        mapEl.classList.remove('hidden');
+        if (mapErrorEl) mapErrorEl.classList.add('hidden');
 
-                const lat = parseFloat(rep.latitud);
-const lon = parseFloat(rep.longitud);
-// Remover marcador anterior si existía
+        const lat = parseFloat(rep.latitud);
+        const lon = parseFloat(rep.longitud);
+
         if (marcadorActual) {
             mapa.removeLayer(marcadorActual);
         }
 
-        // Crear marcador estándar de Leaflet
         marcadorActual = L.marker([lat, lon]).addTo(mapa)
             .bindPopup(`<b>${rep.tipo || ''}</b><br>${rep.sector || ''}`)
             .openPopup();
@@ -361,23 +363,12 @@ const lon = parseFloat(rep.longitud);
             mapa.invalidateSize();
             mapa.setView([lat, lon], 15);
         }, 100);
-setTimeout(() => {
-    mapa.invalidateSize();
-    mapa.setView([lat, lon], 15);
-}, 100);
-                if (markerActual) map.removeLayer(markerActual);
 
-markerActual = L.marker([lat, lng]).addTo(map)
-    .bindPopup(`<b>${rep.tipo || ''}</b><br>${rep.sector || ''}`)
-    .openPopup();
-
-map.setView([lat, lng], 15);
-            } else {
-                mapEl.classList.add('hidden');
-                if (mapErrorEl) mapErrorEl.classList.remove('hidden');
-                if (marcadorActual) mapa.removeLayer(marcadorActual);
-            }
-
+    } else {
+        mapEl.classList.add('hidden');
+        if (mapErrorEl) mapErrorEl.classList.remove('hidden');
+        if (marcadorActual) mapa.removeLayer(marcadorActual);
+    }
             actualizarColorSelect(estadoFicha);
         }
 
