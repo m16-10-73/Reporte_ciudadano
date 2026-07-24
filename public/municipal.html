@@ -491,20 +491,21 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
         }
 
         function derivarEmail() {
-            if (!reporteSeleccionado) return;
-            const r = reporteSeleccionado;
+            if (!reporteSeleccionado) {
+                alert("Por favor, selecciona un reporte primero.");
+                return;
+            }
             
-            // Busca la propiedad de la foto de forma segura
-            const fotoEncontrada = r.foto_url || r.foto || r.imagen || r.url_foto || r.imagen_url || '';
+            const r = reporteSeleccionado;
+            const fotoEncontrada = r.foto_url || r.foto || r.imagen || r.url_foto || '';
             const fotoUrl = (fotoEncontrada && fotoEncontrada !== 'sin-foto') ? fotoEncontrada : 'Sin foto';
             const mapaUrl = (r.latitud && r.longitud) ? `https://www.google.com/maps?q=${r.latitud},${r.longitud}` : 'Sin GPS';
             
             const correo = prompt("Ingrese el correo del supervisor o jefatura:");
             
-            if (correo) {
+            if (correo && correo.trim() !== '') {
                 const asunto = `[ORDEN DE TRABAJO #${r.id || ''}] Incidencia - ${r.tipo || 'General'}`;
                 
-                // Texto en una sola estructura sin saltos extra que rompan el Mailto
                 const lineas = [
                     "Estimado/a Supervisor/a,",
                     "",
@@ -524,11 +525,11 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
                 ];
 
                 const cuerpoTexto = lineas.join("\n");
-
-                // Genera la URL con codificación segura de URI
-                const mailtoUrl = `mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpoTexto)}`;
                 
-                window.location.href = mailtoUrl;
+                // Abre directamente el redactor de Gmail en una nueva pestaña (funciona en el 99% de los casos)
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(correo)}&su=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpoTexto)}`;
+                
+                window.open(gmailUrl, '_blank');
             }
         }
 
