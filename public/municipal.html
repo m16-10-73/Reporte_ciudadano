@@ -13,21 +13,29 @@
     <style>
         #map { height: 450px; width: 100%; border-radius: 12px; }
         /* REGLAS PARA IMPRESIÓN OFICIAL DE ORDEN DE TRABAJO */
-        @media print {
-    /* Ocultar elementos sobrantes si existen */
-    header, nav, button {
+       @media print {
+    /* 1. Ocultar la navegación superior, la tabla de reportes y las métricas */
+    header, 
+    nav, 
+    main > div:first-child, 
+    button {
         display: none !important;
     }
 
-    /* Reducir alto del mapa para ahorrar espacio */
+    /* 2. Mantener visible solo la ficha del incidente */
+    body {
+        background: white !important;
+    }
+
+    /* 3. Ajuste de dimensiones del mapa */
     #map {
         display: block !important;
         visibility: visible !important;
         height: 180px !important;
         width: 100% !important;
-        position: relative !important;
     }
-    
+
+    /* 4. Asegurar la visualización de mosaicos del mapa */
     .leaflet-container,
     .leaflet-tile-container img,
     .leaflet-marker-icon {
@@ -36,12 +44,18 @@
         print-color-adjust: exact !important;
     }
 
-    /* Ajustar foto para que no empuje las firmas a la página 2 */
+    /* 5. Ajustar alto de fotografía para encajar en la misma hoja */
     #detFoto {
-        max-height: 130px !important;
+        max-height: 120px !important;
         object-fit: contain !important;
     }
 
+    /* 6. Espaciado compacto para el bloque de firmas */
+    .firmas-contenedor {
+        margin-top: 1rem !important;
+        padding-top: 0.5rem !important;
+        page-break-inside: avoid !important;
+    }
     /* Compactar espacio de firmas */
     .firmas-contenedor {
         margin-top: 1rem !important;
