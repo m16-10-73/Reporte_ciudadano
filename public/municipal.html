@@ -50,6 +50,25 @@
                 display: block !important;
             }
         }
+        @media print {
+    /* Forzar que el contenedor del mapa sea visible y mantenga su tamaño */
+    #map {
+        display: block !important;
+        visibility: visible !important;
+        height: 250px !important;
+        width: 100% !important;
+        position: relative !important;
+    }
+    
+    /* Asegurar que los tiles/imágenes del mapa y marcadores no se borren */
+    .leaflet-container,
+    .leaflet-tile-container img,
+    .leaflet-marker-icon {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans flex flex-col">
