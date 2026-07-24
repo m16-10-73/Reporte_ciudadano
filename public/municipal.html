@@ -533,12 +533,22 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
         }
 
         function imprimirOrden() {
-    if (!reporteSeleccionado) return;
-    if (typeof mapa !== 'undefined' && mapa) {
-        map.invalidateSize();
+    // 1. Si no hay reporte seleccionado, avisa y detiene
+    if (!reporteSeleccionado) {
+        alert("Por favor, selecciona un reporte de la lista antes de imprimir.");
+        return;
     }
-    window.print();
 
+    // 2. Si el mapa existe y es visible (tiene GPS), reajusta el tamaño
+    if (typeof mapa !== 'undefined' && mapa && reporteSeleccionado.latitud && reporteSeleccionado.longitud) {
+        mapa.invalidateSize();
+        if (marcadorActual) {
+            mapa.panTo(marcadorActual.getLatLng());
+        }
+    }
+
+    // 3. Ejecuta la impresión de inmediato
+    window.print();
 }
         window.exportarExcel = function() {
             const datosAExportar = typeof reportesCargados !== 'undefined' ? reportesCargados : [];
