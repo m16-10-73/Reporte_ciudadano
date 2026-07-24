@@ -534,13 +534,11 @@ _Favor gestionar en terreno y confirmar actualización de estado._`;
 
         function imprimirOrden() {
     if (!reporteSeleccionado) return;
-    if (map) {
+    if (typeof map !== 'undefined' && map) {
         map.invalidateSize();
-        if (marcadorActual) {
-            map.panTo(marcadorActual.getLatLng());
-        }
     }
     window.print();
+
 }
         window.exportarExcel = function() {
             const datosAExportar = typeof reportesCargados !== 'undefined' ? reportesCargados : [];
