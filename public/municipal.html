@@ -39,13 +39,18 @@
                 display: block !important;
             }
 
-            /* 4. Ajustar el mapa en la impresión */
-            #map {
+            /* 4. Ajustar el mapa en la impresión: si está oculto en pantalla, se oculta en impresión */
+            #map:not(.hidden) {
                 display: block !important;
                 visibility: visible !important;
                 height: 180px !important;
                 width: 100% !important;
                 margin-bottom: 10px !important;
+                page-break-inside: avoid !important;
+            }
+
+            #map.hidden {
+                display: none !important;
             }
 
             .leaflet-container,
@@ -383,17 +388,21 @@ function verDetalle(rep) {
     }
 
     const imgEl = document.getElementById('detFoto');
-    const noImgEl = document.getElementById('detSinFoto');
-    if (rep.foto_url && rep.foto_url !== 'sin-foto') {
-        imgEl.src = rep.foto_url;
-        imgEl.classList.remove('hidden');
-        imgEl.classList.add('cursor-pointer', 'hover:opacity-90', 'transition');
-        imgEl.onclick = () => abrirModalFoto(rep.foto_url);
-        noImgEl.classList.add('hidden');
-    } else {
-        imgEl.classList.add('hidden');
-        noImgEl.classList.remove('hidden');
-    }
+            const noImgEl = document.getElementById('detSinFoto');
+            
+            // Limpia la foto anterior siempre para evitar que conserve la foto del reporte previo
+            imgEl.src = "";
+
+            if (rep.foto_url && rep.foto_url !== 'sin-foto' && rep.foto_url.trim() !== '') {
+                imgEl.src = rep.foto_url;
+                imgEl.classList.remove('hidden');
+                imgEl.classList.add('cursor-pointer', 'hover:opacity-90', 'transition');
+                imgEl.onclick = () => abrirModalFoto(rep.foto_url);
+                noImgEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                noImgEl.classList.remove('hidden');
+            }
 
     const mapEl = document.getElementById('map');
     const mapErrorEl = document.getElementById('mapaError');
