@@ -14,10 +14,40 @@
         #map { height: 450px; width: 100%; border-radius: 12px; }
         /* REGLAS PARA IMPRESIÓN OFICIAL DE ORDEN DE TRABAJO */
         @media print {
-            header, nav, aside, section:first-child, #map, #mapaError, .no-imprimir, button, #fichaVacia, select {
-                display: none !important;
-            }
+    /* Ocultar elementos sobrantes si existen */
+    header, nav, button {
+        display: none !important;
+    }
 
+    /* Reducir alto del mapa para ahorrar espacio */
+    #map {
+        display: block !important;
+        visibility: visible !important;
+        height: 180px !important;
+        width: 100% !important;
+        position: relative !important;
+    }
+    
+    .leaflet-container,
+    .leaflet-tile-container img,
+    .leaflet-marker-icon {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Ajustar foto para que no empuje las firmas a la página 2 */
+    #detFoto {
+        max-height: 130px !important;
+        object-fit: contain !important;
+    }
+
+    /* Compactar espacio de firmas */
+    .firmas-contenedor {
+        margin-top: 1rem !important;
+        padding-top: 0.5rem !important;
+        page-break-inside: avoid !important;
+    }
             body, main {
                 background: white !important;
                 color: black !important;
