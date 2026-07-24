@@ -58,6 +58,12 @@
                 margin-top: 0 !important;
                 padding: 10px !important;
             }
+            
+            /* Fuerza a que los contenedores de las tarjetas no tengan alto fijo al imprimir */
+            .bg-white, .rounded-xl, .shadow-sm {
+                height: auto !important;
+                min-height: 0 !important;
+            }
 
             .leaflet-container,
             .leaflet-tile-container img,
