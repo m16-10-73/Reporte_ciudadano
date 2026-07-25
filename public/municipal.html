@@ -130,9 +130,9 @@
                         <i class="fa-solid fa-list-check mr-2 text-slate-500"></i> Bandeja de Reportes
                     </h2>
                     <div class="flex gap-2">
-                        <button id="btnActualizar" onclick="actualizarManual()" class="bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition flex items-center gap-2">
-            <i id="icoActualizar" class="fa-solid fa-arrows-rotate"></i> Actualizar
-        </button>
+                       <button id="btnActualizar" onclick="this.querySelector('i').classList.add('fa-spin'); cargarReportes().finally(() => this.querySelector('i').classList.remove('fa-spin'))" class="bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition flex items-center gap-2">
+    <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+</button>
                         <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded flex items-center gap-1 transition">
                             <i class="fa-solid fa-file-excel"></i> Exportar a Excel
                         </button>
