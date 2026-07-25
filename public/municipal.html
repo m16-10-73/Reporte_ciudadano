@@ -310,6 +310,16 @@
             }).addTo(mapa);
         }
 
+        async function actualizarManual() {
+    const ico = document.getElementById('icoActualizar');
+    if (ico) ico.classList.add('fa-spin');
+    
+    await cargarReportes();
+    
+    setTimeout(() => {
+        if (ico) ico.classList.remove('fa-spin');
+    }, 600);
+}
         async function cargarReportes() {
             const tbody = document.getElementById('tablaReportes');
 if (reportesCargados.length === 0) {
