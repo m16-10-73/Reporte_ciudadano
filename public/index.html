@@ -78,6 +78,39 @@
             margin-left: 5px;
             font-weight: normal;
         }
+        /* Botón bonito para la cámara */
+.btn-subir-foto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 2px dashed #cbd5e1;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.btn-subir-foto:hover, .btn-subir-foto:active {
+  background-color: #f8fafc;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+.btn-subir-foto.foto-cargada {
+  background-color: #f0fdf4;
+  border-color: #22c55e;
+  border-style: solid;
+  color: #15803d;
+}
     </style>
 </head>
 <body>
@@ -146,9 +179,21 @@
         </div>
 
         <div class="form-group">
-            <label for="foto">Capturar / Adjuntar Foto de Evidencia</label>
-            <input type="file" id="foto" name="foto" accept="image/*" capture="environment">
-        </div>
+  <label class="form-label">Capturar / Adjuntar Foto de Evidencia</label>
+  
+  <!-- Ocultamos el input feo y mantenemos tu id="foto" -->
+  <input type="file" id="foto" name="foto" accept="image/*" capture="environment" style="display: none;" onchange="actualizarNombreFoto(this)">
+  
+  <!-- Botón bonito visual -->
+  <label for="foto" class="btn-subir-foto">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+      <circle cx="12" cy="13" r="3"></circle>
+    </svg>
+    <span id="textoFotoBtn">Tomar Foto / Seleccionar Archivo</span>
+  </label>
+</div>
+
 
         <button type="submit" class="btn-submit">Enviar Reporte Municipal</button>
     </form>
@@ -423,6 +468,16 @@ function reenviarReporte(id, tipo, sector, descripcion) {
     cerrarModalMisReportes();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     alert(`Se cargaron los datos del Reporte #${id} para reiterarlo.\nPuedes adjuntar una foto actualizada si deseas y presionar Enviar.`);
+}function actualizarNombreFoto(input) {
+  const btn = document.querySelector('.btn-subir-foto');
+  const texto = document.getElementById('textoFotoBtn');
+  
+  if (input.files && input.files[0]) {
+    btn.classList.add('foto-cargada');
+    texto.innerText = '✓ Foto adjunta: ' + input.files[0].name.substring(0, 18) + '...';
+  } else {
+    btn.classList.remove('foto-cargada');
+    texto.innerText = 'Tomar Foto / Seleccionar Archivo';
+  }
 }
-   
 </script>
